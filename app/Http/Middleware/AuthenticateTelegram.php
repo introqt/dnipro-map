@@ -20,14 +20,10 @@ class AuthenticateTelegram
             ], 401);
         }
 
-        $user = User::where('telegram_id', $telegramId)->first();
-
-        if (! $user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found.',
-            ], 401);
-        }
+        $user = User::firstOrCreate(
+            ['telegram_id' => $telegramId],
+            ['first_name' => 'User']
+        );
 
         auth()->login($user);
 

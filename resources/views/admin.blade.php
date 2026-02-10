@@ -299,6 +299,11 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    setTimeout(() => map.invalidateSize(), 150);
+    if (window.TG) {
+        window.TG.onEvent('viewportChanged', () => map.invalidateSize());
+    }
+
     let clickMarker = null;
 
     map.on('click', (e) => {

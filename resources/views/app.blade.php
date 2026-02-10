@@ -97,8 +97,8 @@
             <div class="sub-heading">Get notified about nearby danger points</div>
             <div class="radius-slider">
                 <label for="radius">Notification radius:</label>
-                <input type="range" id="radius" min="1" max="50" value="5" oninput="updateRadiusLabel(this.value)" />
-                <span id="radius-label" class="radius-value">5 km</span>
+                <input type="range" id="radius" min="1" max="50" value="3" oninput="updateRadiusLabel(this.value)" />
+                <span id="radius-label" class="radius-value">3 km</span>
             </div>
             <button class="btn" onclick="subscribe()">Subscribe</button>
         </div>
@@ -128,6 +128,11 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 150);
+    if (window.TG) {
+        window.TG.onEvent('viewportChanged', () => map.invalidateSize());
+    }
 
     function buildPopupHtml(point) {
         const createdAt = new Date(point.created_at);
