@@ -88,3 +88,24 @@ test('show returns subscription for authenticated user', function () {
         ->assertJsonPath('success', true)
         ->assertJsonPath('data.radius_km', 5);
 });
+
+
+test('store defaults radius to 2 when omitted', function () {
+    $user = User::factory()->create();
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->postJson('/api/subscriptions', [
+            'latitude' => 48.4647,
+            'longitude' => 35.0461,
+            // radius_km omitted to assert defaulting
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.radius_km', 2);
+
+    $this->assertDatabaseHas('subscriptions', [
+        'user_id' => $user->id,
+        'radius_km' => 2,
+    ]);
+});

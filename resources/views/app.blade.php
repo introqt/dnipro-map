@@ -55,6 +55,23 @@
 
     .hidden { display: none !important; }
 
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-overlay .sub-card {
+        max-width: 520px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
     .legend {
         padding: 8px 12px;
         display: flex;
@@ -92,15 +109,18 @@
         <div class="sub-card">Loading subscription...</div>
     </div>
 
-    <div class="subscribe-bar hidden" id="subscribe-form">
+    <div class="subscribe-bar hidden modal-overlay" id="subscribe-form">
         <div class="sub-card">
             <div class="sub-heading">Get notified about nearby danger points</div>
             <div class="radius-slider">
                 <label for="radius">Notification radius:</label>
-                <input type="range" id="radius" min="1" max="50" value="3" oninput="updateRadiusLabel(this.value)" />
-                <span id="radius-label" class="radius-value">3 km</span>
+                <input type="range" id="radius" min="1" max="10" value="2" oninput="updateRadiusLabel(this.value)" />
+                <span id="radius-label" class="radius-value">2 km</span>
             </div>
-            <button class="btn" onclick="subscribe()">Subscribe</button>
+            <div class="sub-actions">
+                <button class="btn" onclick="subscribe()">Subscribe</button>
+                <button class="btn btn-secondary" onclick="closeSubscribeModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -313,8 +333,8 @@
         }
 
         const radiusKm = parseInt(document.getElementById('radius').value, 10);
-        if (isNaN(radiusKm) || radiusKm < 1 || radiusKm > 50) {
-            alert('Radius must be between 1 and 50 km.');
+        if (isNaN(radiusKm) || radiusKm < 1 || radiusKm > 10) {
+            alert('Radius must be between 1 and 10 km.');
             return;
         }
 
@@ -369,6 +389,10 @@
 
     function showChangeRadius() {
         showPanel('subscribe-form');
+    }
+
+    function closeSubscribeModal() {
+        document.getElementById('subscribe-form').classList.add('hidden');
     }
 
     loadPoints();

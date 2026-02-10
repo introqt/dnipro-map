@@ -25,9 +25,12 @@ class SubscriptionController extends Controller
 
     public function store(StoreSubscriptionRequest $request)
     {
+        $data = $request->validated();
+        $data['radius_km'] = $data['radius_km'] ?? 2;
+
         $subscription = $request->user()->subscriptions()->updateOrCreate(
             ['user_id' => $request->user()->id],
-            $request->validated()
+            $data
         );
 
         return $this->successResponse(
