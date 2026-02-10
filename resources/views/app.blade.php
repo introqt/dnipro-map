@@ -8,6 +8,30 @@
         text-align: center;
     }
 
+    .subscribe-bar .radius-input {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 8px;
+    }
+
+    .subscribe-bar .radius-input input {
+        width: 60px;
+        padding: 6px 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .subscribe-bar .sub-info {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+    }
+
+    .hidden { display: none !important; }
+
     .legend {
         padding: 8px 12px;
         display: flex;
@@ -41,8 +65,22 @@
         <span class="legend-item"><span class="legend-dot" style="background:#9e9e9e"></span> &gt;3h</span>
     </div>
 
-    <div class="subscribe-bar">
-        <button class="btn" onclick="subscribe()">🔔 Subscribe to alerts near me</button>
+    <div class="subscribe-bar" id="subscribe-loading">
+        Loading subscription...
+    </div>
+
+    <div class="subscribe-bar hidden" id="subscribe-form">
+        <span class="radius-input">
+            <label for="radius">Radius:</label>
+            <input type="number" id="radius" min="1" max="50" value="5" />
+            <span>km</span>
+        </span>
+        <button class="btn" onclick="subscribe()">🔔 Subscribe</button>
+    </div>
+
+    <div class="subscribe-bar hidden" id="subscribe-active">
+        <div class="sub-info" id="sub-info-text"></div>
+        <button class="btn btn-danger" onclick="unsubscribe()">Unsubscribe</button>
     </div>
 @endsection
 
@@ -111,6 +149,60 @@
         return div.innerHTML;
     }
 
+    let subscriptionCircle = null;
+
+    function showPanel(id) {
+        ['subscribe-loading', 'subscribe-form', 'subscribe-active'].forEach(panelId => {
+            document.getElementById(panelId).classList.toggle('hidden', panelId !== id);
+        });
+    }
+
+    function showActiveSubscription(sub) {
+        document.getElementById('sub-info-text').textContent =
+            `Subscribed within ${sub.radius_km} km of [${sub.latitude.toFixed(4)}, ${sub.longitude.toFixed(4)}]`;
+
+        if (subscriptionCircle) {
+            map.removeLayer(subscriptionCircle);
+        }
+        subscriptionCircle = L.circle([sub.latitude, sub.longitude], {
+            radius: sub.radius_km * 1000,
+            color: '#3390ec',
+            fillColor: '#3390ec',
+            fillOpacity: 0.1,
+            weight: 1
+        }).addTo(map);
+
+        showPanel('subscribe-active');
+    }
+
+    function removeCircle() {
+        if (subscriptionCircle) {
+            map.removeLayer(subscriptionCircle);
+            subscriptionCircle = null;
+        }
+    }
+
+    async function loadSubscription() {
+        const tgId = getTelegramId();
+        if (!tgId) {
+            showPanel('subscribe-form');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/subscriptions', { headers: apiHeaders() });
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                showActiveSubscription(json.data);
+            } else {
+                showPanel('subscribe-form');
+            }
+        } catch {
+            showPanel('subscribe-form');
+        }
+    }
+
     async function subscribe() {
         const tgId = getTelegramId();
         if (!tgId) {
@@ -123,21 +215,31 @@
             return;
         }
 
+        const radiusKm = parseInt(document.getElementById('radius').value, 10);
+        if (isNaN(radiusKm) || radiusKm < 1 || radiusKm > 50) {
+            alert('Radius must be between 1 and 50 km.');
+            return;
+        }
+
         navigator.geolocation.getCurrentPosition(async (pos) => {
             try {
-                const res = await fetch('/api/subscriptions?telegram_id=' + tgId, {
+                const res = await fetch('/api/subscriptions', {
                     method: 'POST',
                     headers: apiHeaders(),
                     body: JSON.stringify({
                         latitude: pos.coords.latitude,
                         longitude: pos.coords.longitude,
-                        radius_km: 5
+                        radius_km: radiusKm
                     })
                 });
 
                 const json = await res.json();
-                alert(json.success ? 'Subscribed!' : (json.message || 'Error'));
-            } catch (e) {
+                if (json.success && json.data) {
+                    showActiveSubscription(json.data);
+                } else {
+                    alert(json.message || 'Failed to subscribe.');
+                }
+            } catch {
                 alert('Failed to subscribe.');
             }
         }, () => {
@@ -145,6 +247,26 @@
         });
     }
 
+    async function unsubscribe() {
+        try {
+            const res = await fetch('/api/subscriptions', {
+                method: 'DELETE',
+                headers: apiHeaders()
+            });
+
+            const json = await res.json();
+            if (json.success) {
+                removeCircle();
+                showPanel('subscribe-form');
+            } else {
+                alert(json.message || 'Failed to unsubscribe.');
+            }
+        } catch {
+            alert('Failed to unsubscribe.');
+        }
+    }
+
     loadPoints();
+    loadSubscription();
 </script>
 @endsection

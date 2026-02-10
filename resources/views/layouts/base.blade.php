@@ -75,6 +75,10 @@
             if (window.TG?.initDataUnsafe?.user?.id) {
                 return window.TG.initDataUnsafe.user.id;
             }
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('telegram_id')) {
+                return params.get('telegram_id');
+            }
             return null;
         }
 

@@ -86,23 +86,37 @@ class TelegramService
     private function handleStart(int $chatId, User $user): void
     {
         $webAppUrl = config('services.telegram.web_app_url');
+        $mapUrl = $webAppUrl.'?telegram_id='.$user->telegram_id;
         $greeting = "Welcome, {$user->first_name}! 👋\n\nUse the buttons below to interact with the map.";
 
-        $keyboard = [
-            'keyboard' => [
+        $rows = [
+            [
                 [
-                    [
-                        'text' => '📍 Map',
-                        'web_app' => ['url' => $webAppUrl],
-                    ],
-                ],
-                [
-                    [
-                        'text' => '🔔 Subscribe',
-                        'request_location' => true,
-                    ],
+                    'text' => '📍 Map',
+                    'web_app' => ['url' => $mapUrl],
                 ],
             ],
+            [
+                [
+                    'text' => '🔔 Subscribe',
+                    'request_location' => true,
+                ],
+            ],
+        ];
+
+        if ($user->isAdmin()) {
+            $adminUrl = preg_replace('#/app$#', '/admin', $webAppUrl);
+            $adminUrl .= '?telegram_id='.$user->telegram_id;
+            $rows[] = [
+                [
+                    'text' => '🛠 Admin Panel',
+                    'web_app' => ['url' => $adminUrl],
+                ],
+            ];
+        }
+
+        $keyboard = [
+            'keyboard' => $rows,
             'resize_keyboard' => true,
         ];
 

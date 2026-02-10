@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\PointStatus;
+use App\Events\PointCreated;
 use App\Http\Concerns\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePointRequest;
@@ -31,6 +32,8 @@ class PointController extends Controller
         }
 
         $point = $request->user()->points()->create($request->validated());
+
+        PointCreated::dispatch($point);
 
         return $this->successResponse(
             new PointResource($point->load('user')),

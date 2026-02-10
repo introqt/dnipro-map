@@ -12,5 +12,7 @@ Route::middleware(AuthenticateTelegram::class)->group(function () {
     Route::put('/points/{point}', [PointController::class, 'update']);
     Route::delete('/points/{point}', [PointController::class, 'destroy']);
 
+    Route::get('/subscriptions', [SubscriptionController::class, 'show']);
     Route::post('/subscriptions', [SubscriptionController::class, 'store']);
+    Route::delete('/subscriptions', [SubscriptionController::class, 'destroy']);
 });
