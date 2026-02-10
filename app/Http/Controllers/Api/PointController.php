@@ -17,7 +17,7 @@ class PointController extends Controller
 
     public function index()
     {
-        $points = Point::with('user')
+        $points = Point::with(['user', 'votes'])
             ->where('status', PointStatus::Active)
             ->latest()
             ->get();

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\PointController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\UploadController;
+use App\Http\Controllers\Api\VoteController;
 use App\Http\Middleware\AuthenticateTelegram;
 use Illuminate\Support\Facades\Route;
 
@@ -15,4 +17,8 @@ Route::middleware(AuthenticateTelegram::class)->group(function () {
     Route::get('/subscriptions', [SubscriptionController::class, 'show']);
     Route::post('/subscriptions', [SubscriptionController::class, 'store']);
     Route::delete('/subscriptions', [SubscriptionController::class, 'destroy']);
+
+    Route::post('/upload', [UploadController::class, 'store']);
+
+    Route::post('/points/{point}/vote', [VoteController::class, 'store']);
 });

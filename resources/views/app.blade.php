@@ -8,26 +8,49 @@
         text-align: center;
     }
 
-    .subscribe-bar .radius-input {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-right: 8px;
+    .sub-card {
+        background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        border-radius: 12px;
+        padding: 16px;
+        max-width: 400px;
+        margin: 0 auto;
     }
 
-    .subscribe-bar .radius-input input {
-        width: 60px;
-        padding: 6px 8px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
+    .sub-heading {
         font-size: 14px;
-        text-align: center;
+        font-weight: 600;
+        margin-bottom: 12px;
     }
 
-    .subscribe-bar .sub-info {
+    .radius-slider {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+    }
+
+    .radius-slider input[type="range"] {
+        flex: 1;
+        accent-color: var(--tg-theme-button-color, #3390ec);
+    }
+
+    .radius-value {
+        font-weight: 600;
+        min-width: 45px;
+        text-align: right;
+    }
+
+    .sub-info {
         font-size: 13px;
         color: #666;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+    }
+
+    .sub-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
     }
 
     .hidden { display: none !important; }
@@ -66,21 +89,29 @@
     </div>
 
     <div class="subscribe-bar" id="subscribe-loading">
-        Loading subscription...
+        <div class="sub-card">Loading subscription...</div>
     </div>
 
     <div class="subscribe-bar hidden" id="subscribe-form">
-        <span class="radius-input">
-            <label for="radius">Radius:</label>
-            <input type="number" id="radius" min="1" max="50" value="5" />
-            <span>km</span>
-        </span>
-        <button class="btn" onclick="subscribe()">🔔 Subscribe</button>
+        <div class="sub-card">
+            <div class="sub-heading">Get notified about nearby danger points</div>
+            <div class="radius-slider">
+                <label for="radius">Notification radius:</label>
+                <input type="range" id="radius" min="1" max="50" value="5" oninput="updateRadiusLabel(this.value)" />
+                <span id="radius-label" class="radius-value">5 km</span>
+            </div>
+            <button class="btn" onclick="subscribe()">Subscribe</button>
+        </div>
     </div>
 
     <div class="subscribe-bar hidden" id="subscribe-active">
-        <div class="sub-info" id="sub-info-text"></div>
-        <button class="btn btn-danger" onclick="unsubscribe()">Unsubscribe</button>
+        <div class="sub-card">
+            <div class="sub-info" id="sub-info-text"></div>
+            <div class="sub-actions">
+                <button class="btn btn-danger" onclick="unsubscribe()">Unsubscribe</button>
+                <button class="btn btn-secondary btn-sm" onclick="showChangeRadius()">Change radius</button>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -98,6 +129,78 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    function buildPopupHtml(point) {
+        const createdAt = new Date(point.created_at);
+        const timeAgo = getTimeAgo(createdAt);
+        const likeActive = point.user_vote === 'like' ? ' active-like' : '';
+        const dislikeActive = point.user_vote === 'dislike' ? ' active-dislike' : '';
+
+        let html = `<div class="popup-content" id="popup-point-${point.id}">
+            <strong>${escapeHtml(point.description)}</strong>
+            <div class="time-ago">${timeAgo} &mdash; ${escapeHtml(point.user.first_name)}</div>`;
+
+        if (point.photo_url) {
+            html += `<img src="${escapeHtml(point.photo_url)}" alt="Photo" />`;
+        }
+
+        html += `<div class="vote-bar">
+            <button class="vote-btn${likeActive}" onclick="vote(${point.id}, 'like')">
+                &#x1F44D; <span id="likes-${point.id}">${point.likes || 0}</span>
+            </button>
+            <button class="vote-btn${dislikeActive}" onclick="vote(${point.id}, 'dislike')">
+                &#x1F44E; <span id="dislikes-${point.id}">${point.dislikes || 0}</span>
+            </button>
+        </div></div>`;
+
+        return html;
+    }
+
+    const pointsCache = {};
+
+    async function vote(pointId, type) {
+        const tgId = getTelegramId();
+        if (!tgId) {
+            alert('Please open this app from Telegram to vote.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/points/${pointId}/vote`, {
+                method: 'POST',
+                headers: apiHeaders(),
+                body: JSON.stringify({ type })
+            });
+
+            const json = await res.json();
+            if (!json.success) return;
+
+            const point = pointsCache[pointId];
+            if (point) {
+                point.likes = json.data.likes;
+                point.dislikes = json.data.dislikes;
+                point.user_vote = json.data.user_vote;
+            }
+
+            const likesEl = document.getElementById(`likes-${pointId}`);
+            const dislikesEl = document.getElementById(`dislikes-${pointId}`);
+            if (likesEl) likesEl.textContent = json.data.likes;
+            if (dislikesEl) dislikesEl.textContent = json.data.dislikes;
+
+            const popup = document.getElementById(`popup-point-${pointId}`);
+            if (popup) {
+                const buttons = popup.querySelectorAll('.vote-btn');
+                buttons.forEach(btn => btn.classList.remove('active-like', 'active-dislike'));
+                if (json.data.user_vote === 'like') {
+                    buttons[0].classList.add('active-like');
+                } else if (json.data.user_vote === 'dislike') {
+                    buttons[1].classList.add('active-dislike');
+                }
+            }
+        } catch (e) {
+            console.error('Failed to vote', e);
+        }
+    }
+
     async function loadPoints() {
         try {
             const res = await fetch('/api/points');
@@ -105,6 +208,7 @@
             if (!json.success) return;
 
             json.data.forEach(point => {
+                pointsCache[point.id] = point;
                 const color = COLOR_MAP[point.color] || COLOR_MAP.gray;
                 const marker = L.circleMarker([point.latitude, point.longitude], {
                     radius: 10,
@@ -114,19 +218,7 @@
                     fillOpacity: 0.85
                 }).addTo(map);
 
-                const createdAt = new Date(point.created_at);
-                const timeAgo = getTimeAgo(createdAt);
-
-                let popupHtml = `<div class="popup-content">
-                    <strong>${escapeHtml(point.description)}</strong>
-                    <div class="time-ago">${timeAgo} — ${point.user.first_name}</div>`;
-
-                if (point.photo_url) {
-                    popupHtml += `<img src="${escapeHtml(point.photo_url)}" alt="Photo" />`;
-                }
-
-                popupHtml += `</div>`;
-                marker.bindPopup(popupHtml);
+                marker.bindPopup(() => buildPopupHtml(point), { maxWidth: 280 });
             });
         } catch (e) {
             console.error('Failed to load points', e);
@@ -264,6 +356,14 @@
         } catch {
             alert('Failed to unsubscribe.');
         }
+    }
+
+    function updateRadiusLabel(value) {
+        document.getElementById('radius-label').textContent = value + ' km';
+    }
+
+    function showChangeRadius() {
+        showPanel('subscribe-form');
     }
 
     loadPoints();

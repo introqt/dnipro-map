@@ -118,6 +118,8 @@ return [
     |
     */
 
+    'admin_password' => env('ADMIN_PASSWORD'),
+
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),

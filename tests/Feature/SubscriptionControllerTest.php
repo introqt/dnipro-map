@@ -55,3 +55,36 @@ test('store rejects unauthenticated request', function () {
 
     $response->assertUnauthorized();
 });
+
+test('destroy removes subscription', function () {
+    $user = User::factory()->create();
+    $user->subscriptions()->create([
+        'latitude' => 48.4647,
+        'longitude' => 35.0461,
+        'radius_km' => 5,
+    ]);
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->deleteJson('/api/subscriptions');
+
+    $response->assertOk()
+        ->assertJsonPath('success', true);
+
+    $this->assertDatabaseMissing('subscriptions', ['user_id' => $user->id]);
+});
+
+test('show returns subscription for authenticated user', function () {
+    $user = User::factory()->create();
+    $user->subscriptions()->create([
+        'latitude' => 48.4647,
+        'longitude' => 35.0461,
+        'radius_km' => 5,
+    ]);
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->getJson('/api/subscriptions');
+
+    $response->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.radius_km', 5);
+});
