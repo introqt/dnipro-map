@@ -32,7 +32,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
 # Install Composer
-COPY --from=composer:2 /usr/local/bin/composer /usr/local/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /var/www/html
 
@@ -50,13 +50,15 @@ COPY --from=frontend /app/public/build public/build
 RUN composer dump-autoload --optimize
 
 # Create persistent data directory and storage structure
-RUN mkdir -p /data \
+RUN mkdir -p /data/storage/photos \
     && mkdir -p storage/framework/{sessions,views,cache} \
     && mkdir -p storage/logs \
+    && mkdir -p storage/app/public \
     && mkdir -p bootstrap/cache
 
 # Make writable
-RUN chown -R www-data:www-data storage bootstrap/cache /data
+RUN chown -R www-data:www-data storage bootstrap/cache /data \
+    && chmod -R 775 /data
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

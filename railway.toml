@@ -2,6 +2,10 @@
 dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/app"
+healthcheckPath = "/up"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
+
+# Persistent volume for SQLite database and uploaded files
+[[deploy.volumes]]
+mountPath = "/data"
