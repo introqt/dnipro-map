@@ -47,10 +47,14 @@ if [ ! -L "storage/app/public/photos" ]; then
     fi
 fi
 
-# Generate app key if not set
+# Generate app key if not set and .env exists
 if [ -z "$APP_KEY" ]; then
-    echo "Generating application key..." >&2
-    php artisan key:generate --force 2>&1 || echo "Warning: key:generate failed" >&2
+    if [ -f "/var/www/html/.env" ]; then
+        echo "Generating application key..." >&2
+        php artisan key:generate --force 2>&1 || echo "Warning: key:generate failed" >&2
+    else
+        echo "APP_KEY is not set and .env is missing; set APP_KEY in Railway variables" >&2
+    fi
 else
     echo "APP_KEY already set, skipping generation" >&2
 fi
