@@ -17,9 +17,38 @@
         font-weight: 700;
     }
 
+    .admin-actions {
+        display:flex;
+        align-items:center;
+        gap:8px;
+    }
+
+    .admin-view-toggle .btn {
+        padding:4px 8px;
+        font-size:12px;
+        border-radius:6px;
+        border:1px solid #ccc;
+        background:transparent;
+    }
+
+    .admin-view-toggle .btn.active {
+        background:var(--tg-theme-button-color,#3390ec);
+        color:#fff;
+        border-color:var(--tg-theme-button-color,#3390ec);
+    }
+
     .admin-layout {
         display: flex;
         height: calc(100vh - 45px);
+    }
+
+    /* when in list view, hide main area; when in map view hide sidebar */
+    .admin-layout.list-view .admin-main {
+        display: none;
+    }
+    .admin-layout.map-view .admin-sidebar {
+        display: none;
+        width: 0;
     }
 
     .admin-sidebar {
@@ -62,7 +91,8 @@
     }
 
     .form-group input,
-    .form-group textarea {
+    .form-group textarea,
+    .form-group select {
         width: 100%;
         padding: 8px;
         border: 1px solid #ccc;
@@ -146,6 +176,12 @@
         font-size: 13px;
     }
 
+    .point-item .type-label {
+        font-size: 11px;
+        color:#666;
+        margin-right:8px;
+    }
+
     .point-item .actions {
         display: flex;
         gap: 4px;
@@ -213,18 +249,28 @@
         #map {
             height: 40vh;
         }
+
+        /* ensure toggle behavior works on mobile */
+        .admin-layout.list-view .admin-main { display: none; }
+        .admin-layout.map-view .admin-sidebar { display: none; }
     }
 @endsection
 
 @section('content')
     <div class="admin-header">
         <h1>Dnipro Map Admin</h1>
-        @if(session('admin_telegram_id'))
-            <form method="POST" action="/admin/logout" class="logout-form">
-                @csrf
-                <button type="submit">Logout</button>
-            </form>
-        @endif
+        <div class="admin-actions">
+            <div class="admin-view-toggle">
+                <button class="btn btn-sm" id="view-list-btn" onclick="setAdminView('list')">List</button>
+                <button class="btn btn-sm" id="view-map-btn" onclick="setAdminView('map')">Map</button>
+            </div>
+            @if(session('admin_telegram_id'))
+                <form method="POST" action="/admin/logout" class="logout-form">
+                    @csrf
+                    <button type="submit">Logout</button>
+                </form>
+            @endif
+        </div>
     </div>
 
     <div class="admin-layout">
@@ -239,6 +285,11 @@
                     <button class="filter-btn" data-color="yellow" onclick="setColorFilter('yellow', this)" style="border-color:#fb8c00;color:#fb8c00;">Yellow</button>
                     <button class="filter-btn" data-color="green" onclick="setColorFilter('green', this)" style="border-color:#43a047;color:#43a047;">Green</button>
                     <button class="filter-btn" data-color="gray" onclick="setColorFilter('gray', this)" style="border-color:#9e9e9e;color:#9e9e9e;">Gray</button>
+                    <span style="width:8px;"></span>
+                    <button class="filter-btn type-btn active" data-type="all" onclick="setTypeFilter('all', this)">All types</button>
+                    <button class="filter-btn type-btn" data-type="static_danger" onclick="setTypeFilter('static_danger', this)" style="border-color:#666;color:#666;">Static</button>
+                    <button class="filter-btn type-btn" data-type="moving_person" onclick="setTypeFilter('moving_person', this)" style="border-color:#c2185b;color:#c2185b;">Moving</button>
+                    <button class="filter-btn type-btn" data-type="danger_road" onclick="setTypeFilter('danger_road', this)" style="border-color:#ffb300;color:#ffb300;">Road</button>
                     <span class="point-count" id="point-count">0 points</span>
                 </div>
             </div>
@@ -261,6 +312,14 @@
                     <div class="form-group">
                         <label>Description</label>
                         <textarea id="desc" required maxlength="1000"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="type">
+                            <option value="static_danger">Static danger</option>
+                            <option value="moving_person">Moving person</option>
+                            <option value="danger_road">Danger road</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Photo (optional — paste from clipboard or select file)</label>
@@ -293,6 +352,8 @@
     let editingPointId = null;
     let allPoints = [];
     let activeColorFilter = 'all';
+    let activeTypeFilter = 'all';
+    let adminViewMode = localStorage.getItem('adminView') || 'list';
 
     const map = L.map('map').setView([48.4647, 35.0461], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -331,6 +392,7 @@
             longitude: parseFloat(document.getElementById('lng').value),
             description: document.getElementById('desc').value,
             photo_url: document.getElementById('photo').value || null,
+            type: (document.getElementById('type') ? document.getElementById('type').value : 'static_danger'),
         };
 
         const url = editingPointId ? `/api/points/${editingPointId}` : '/api/points';
@@ -369,6 +431,9 @@
             showPhotoPreview(point.photo_url);
         } else {
             clearPhoto();
+        }
+        if (document.getElementById('type')) {
+            document.getElementById('type').value = point.type || 'static_danger';
         }
         document.getElementById('save-btn').textContent = 'Update Point';
         document.getElementById('cancel-btn').style.display = 'inline-block';
@@ -436,6 +501,7 @@
 
         const filtered = allPoints.filter(point => {
             if (activeColorFilter !== 'all' && point.color !== activeColorFilter) return false;
+            if (activeTypeFilter !== 'all' && (point.type || 'static_danger') !== activeTypeFilter) return false;
             if (searchTerm && !point.description.toLowerCase().includes(searchTerm)) return false;
             return true;
         });
@@ -444,15 +510,18 @@
 
         filtered.forEach(point => {
             const color = COLOR_MAP[point.color] || COLOR_MAP.gray;
+            const radius = point.type === 'moving_person' ? 10 : 8;
             const m = L.circleMarker([point.latitude, point.longitude], {
-                radius: 8, fillColor: color, color: '#333', weight: 1, fillOpacity: 0.85
+                radius: radius, fillColor: color, color: '#333', weight: 1, fillOpacity: 0.85
             }).addTo(map);
             markers.push(m);
 
             const div = document.createElement('div');
             div.className = 'point-item';
+            const typeLabel = point.type ? `<span class="type-label">${escapeHtml(point.type)}</span>` : '';
             div.innerHTML = `
                 <span style="background:${color};width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;"></span>
+                ${typeLabel}
                 <div class="info">${escapeHtml(point.description)}</div>
                 <div class="actions">
                     <button class="btn btn-sm" onclick='editPoint(${JSON.stringify(point)})'>Edit</button>
@@ -482,6 +551,42 @@
         }
         renderPoints();
     }
+
+    function setTypeFilter(type, btn) {
+        activeTypeFilter = type;
+        document.querySelectorAll('.type-btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = 'transparent';
+            b.style.color = b.style.borderColor || '#000';
+        });
+        btn.classList.add('active');
+        if (type !== 'all') {
+            btn.style.background = btn.style.borderColor;
+            btn.style.color = '#fff';
+        }
+        renderPoints();
+    }
+
+    function setAdminView(view) {
+        adminViewMode = view;
+        localStorage.setItem('adminView', view);
+        const layout = document.querySelector('.admin-layout');
+        if (!layout) return;
+        layout.classList.remove('list-view','map-view');
+        layout.classList.add(view + '-view');
+        const listBtn = document.getElementById('view-list-btn');
+        const mapBtn = document.getElementById('view-map-btn');
+        if (listBtn) listBtn.classList.toggle('active', view === 'list');
+        if (mapBtn) mapBtn.classList.toggle('active', view === 'map');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // Apply saved view
+        setAdminView(adminViewMode);
+        // mark default type button active
+        const defaultTypeBtn = document.querySelector('.type-btn[data-type="all"]');
+        if (defaultTypeBtn) defaultTypeBtn.classList.add('active');
+    });
 
     function escapeHtml(text) {
         const div = document.createElement('div');

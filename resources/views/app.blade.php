@@ -4,30 +4,30 @@
 
 @section('styles')
     .subscribe-bar {
-        padding: 12px;
+        padding: 8px;
         text-align: center;
     }
 
     .sub-card {
         background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-        border-radius: 12px;
-        padding: 16px;
-        max-width: 400px;
+        border-radius: 10px;
+        padding: 10px;
+        max-width: 320px;
         margin: 0 auto;
     }
 
     .sub-heading {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
     }
 
     .radius-slider {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-        font-size: 13px;
+        gap: 6px;
+        margin-bottom: 8px;
+        font-size: 12px;
     }
 
     .radius-slider input[type="range"] {
@@ -42,14 +42,14 @@
     }
 
     .sub-info {
-        font-size: 13px;
+        font-size: 12px;
         color: #666;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
     }
 
     .sub-actions {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         justify-content: center;
     }
 
@@ -73,10 +73,10 @@
     }
 
     .legend {
-        padding: 8px 12px;
+        padding: 6px 8px;
         display: flex;
-        gap: 12px;
-        font-size: 13px;
+        gap: 8px;
+        font-size: 12px;
         justify-content: center;
         flex-wrap: wrap;
     }
@@ -88,10 +88,24 @@
     }
 
     .legend-dot {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         display: inline-block;
+    }
+
+    .filter-btn {
+        padding: 4px 8px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        background: transparent;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .filter-btn.active {
+        background: var(--tg-theme-button-color, #3390ec);
+        color: #fff;
+        border-color: var(--tg-theme-button-color, #3390ec);
     }
 @endsection
 
@@ -103,6 +117,11 @@
         <span class="legend-item"><span class="legend-dot" style="background:#fb8c00"></span> 1-2h</span>
         <span class="legend-item"><span class="legend-dot" style="background:#43a047"></span> 2-3h</span>
         <span class="legend-item"><span class="legend-dot" style="background:#9e9e9e"></span> &gt;3h</span>
+        <div style="width:12px;"></div>
+        <button class="filter-btn type-btn active" data-type="all" onclick="setPublicTypeFilter('all', this)">All</button>
+        <button class="filter-btn type-btn" data-type="static_danger" onclick="setPublicTypeFilter('static_danger', this)">Static</button>
+        <button class="filter-btn type-btn" data-type="moving_person" onclick="setPublicTypeFilter('moving_person', this)">Moving</button>
+        <button class="filter-btn type-btn" data-type="danger_road" onclick="setPublicTypeFilter('danger_road', this)">Road</button>
     </div>
 
     <div class="subscribe-bar" id="subscribe-loading">
@@ -175,12 +194,22 @@
             <button class="vote-btn${dislikeActive}" onclick="vote(${point.id}, 'dislike')">
                 &#x1F44E; <span id="dislikes-${point.id}">${point.dislikes || 0}</span>
             </button>
-        </div></div>`;
+        </div>
+        <div class="comments" id="comments-${point.id}"><em>Loading comments...</em></div>
+        <div class="comment-input">
+            <textarea id="comment-input-${point.id}" placeholder="Add a comment" style="width:100%;min-height:50px;"></textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+                <button class="btn btn-sm" onclick="postComment(${point.id})">Post</button>
+            </div>
+        </div>
+        </div>`;
 
         return html;
     }
 
     const pointsCache = {};
+    let publicTypeFilter = 'all';
+    let publicMarkers = [];
 
     async function vote(pointId, type) {
         const tgId = getTelegramId();
@@ -232,8 +261,15 @@
             const json = await res.json();
             if (!json.success) return;
 
+            // remove previous markers
+            publicMarkers.forEach(m => map.removeLayer(m));
+            publicMarkers = [];
+
             json.data.forEach(point => {
                 pointsCache[point.id] = point;
+                if (publicTypeFilter !== 'all' && (point.type || 'static_danger') !== publicTypeFilter) {
+                    return;
+                }
                 const color = COLOR_MAP[point.color] || COLOR_MAP.gray;
                 const marker = L.circleMarker([point.latitude, point.longitude], {
                     radius: 10,
@@ -243,7 +279,9 @@
                     fillOpacity: 0.85
                 }).addTo(map);
 
+                publicMarkers.push(marker);
                 marker.bindPopup(() => buildPopupHtml(point), { maxWidth: 280 });
+                marker.on('popupopen', () => loadComments(point.id));
             });
         } catch (e) {
             console.error('Failed to load points', e);
@@ -286,7 +324,8 @@
             color: '#3390ec',
             fillColor: '#3390ec',
             fillOpacity: 0.1,
-            weight: 1
+            weight: 1,
+            interactive: false
         }).addTo(map);
 
         showPanel('subscribe-active');
@@ -296,6 +335,52 @@
         if (subscriptionCircle) {
             map.removeLayer(subscriptionCircle);
             subscriptionCircle = null;
+        }
+    }
+
+    async function loadComments(pointId) {
+        try {
+            const res = await fetch(`/api/points/${pointId}/comments`);
+            const json = await res.json();
+            const container = document.getElementById(`comments-${pointId}`);
+            if (!container) return;
+            if (!json.success) { container.innerHTML = '<div>Failed to load comments.</div>'; return; }
+            const data = json.data || [];
+            if (data.length === 0) { container.innerHTML = '<div>No comments yet.</div>'; return; }
+            container.innerHTML = data.map(c => `
+                <div class="comment-item"><strong>${escapeHtml(c.user?.first_name || 'Anon')}</strong>
+                <div>${escapeHtml(c.text)}</div>
+                <div class="time-ago">${new Date(c.created_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error('Failed to load comments', e);
+        }
+    }
+
+    async function postComment(pointId) {
+        const tgId = getTelegramId();
+        if (!tgId) { alert('Please open this app from Telegram to comment.'); return; }
+        const textarea = document.getElementById(`comment-input-${pointId}`);
+        if (!textarea) return;
+        const text = textarea.value.trim();
+        if (!text) return;
+        try {
+            const res = await fetch(`/api/points/${pointId}/comments`, {
+                method: 'POST',
+                headers: apiHeaders(),
+                body: JSON.stringify({ text })
+            });
+            const json = await res.json();
+            if (json.success) {
+                textarea.value = '';
+                await loadComments(pointId);
+            } else {
+                alert(json.message || 'Failed to post comment.');
+            }
+        } catch (e) {
+            console.error('Failed to post comment', e);
+            alert('Failed to post comment.');
         }
     }
 
@@ -393,6 +478,13 @@
 
     function closeSubscribeModal() {
         document.getElementById('subscribe-form').classList.add('hidden');
+    }
+
+    function setPublicTypeFilter(type, btn) {
+        publicTypeFilter = type;
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadPoints();
     }
 
     loadPoints();

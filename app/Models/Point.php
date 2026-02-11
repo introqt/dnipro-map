@@ -19,6 +19,7 @@ class Point extends Model
         'description',
         'photo_url',
         'status',
+        'type',
     ];
 
     protected function casts(): array
@@ -38,6 +39,11 @@ class Point extends Model
     public function votes(): HasMany
     {
         return $this->hasMany(Vote::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
     }
 
     public function getColorAttribute(): string

@@ -28,6 +28,7 @@ class PointResource extends JsonResource
             'user_vote' => $currentUser
                 ? $this->votes->where('user_id', $currentUser->id)->first()?->type->value
                 : null,
+            'type' => $this->type ?? 'static_danger',
         ];
     }
 }

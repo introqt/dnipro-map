@@ -68,6 +68,16 @@ class TelegramService
 
             return;
         }
+
+        // Handle unsubscribe button text
+        if (stripos($text, 'unsubscribe') !== false || $text === '🔕 Unsubscribe') {
+            // Remove all subscriptions for the user
+            $user->subscriptions()->delete();
+
+            $this->sendMessage($chatId, '✅ Unsubscribed.');
+
+            return;
+        }
     }
 
     private function resolveUser(array $from): User
@@ -96,13 +106,23 @@ class TelegramService
                     'web_app' => ['url' => $mapUrl],
                 ],
             ],
-            [
+        ];
+
+        // Show Subscribe or Unsubscribe depending on whether the user has a subscription
+        if ($user->subscriptions()->exists()) {
+            $rows[] = [
+                [
+                    'text' => '🔕 Unsubscribe',
+                ],
+            ];
+        } else {
+            $rows[] = [
                 [
                     'text' => '🔔 Subscribe',
                     'request_location' => true,
                 ],
-            ],
-        ];
+            ];
+        }
 
         if ($user->isAdmin()) {
             $adminUrl = preg_replace('#/app$#', '/admin', $webAppUrl);
