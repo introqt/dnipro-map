@@ -17,7 +17,7 @@ class StoreSubscriptionRequest extends FormRequest
         return [
             'latitude' => ['required', 'numeric', 'between:48.35,48.60'],
             'longitude' => ['required', 'numeric', 'between:34.90,35.15'],
-            'radius_km' => ['required', 'integer', 'min:1', 'max:50'],
+            'radius_km' => ['nullable', 'integer', 'min:1', 'max:10'],
         ];
     }
 }

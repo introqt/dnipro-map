@@ -118,6 +118,11 @@ return [
     |
     */
 
+    'admin_password' => env('ADMIN_PASSWORD'),
+
+    'channel_webhook_secret' => env('CHANNEL_WEBHOOK_SECRET'),
+
+
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),

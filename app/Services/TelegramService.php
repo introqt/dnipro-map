@@ -68,17 +68,28 @@ class TelegramService
 
             return;
         }
+
+        // Handle unsubscribe button text
+        if (stripos($text, 'unsubscribe') !== false || $text === '🔕 Unsubscribe') {
+            // Remove all subscriptions for the user
+            $user->subscriptions()->delete();
+
+            $this->sendMessage($chatId, '✅ Unsubscribed.');
+
+            return;
+        }
     }
 
     private function resolveUser(array $from): User
     {
-        $adminTelegramId = (int) config('services.telegram.admin_id');
+        $adminEnv = config('services.telegram.admin_id');
+        $adminIds = array_filter(array_map('trim', explode(',', $adminEnv ?? '')));
 
         return User::updateOrCreate(
             ['telegram_id' => $from['id']],
             [
                 'first_name' => $from['first_name'] ?? 'Unknown',
-                'role' => $from['id'] === $adminTelegramId ? UserRole::Admin : UserRole::User,
+                'role' => in_array((string) $from['id'], $adminIds, true) ? UserRole::Admin : UserRole::User,
             ]
         );
     }
@@ -96,13 +107,23 @@ class TelegramService
                     'web_app' => ['url' => $mapUrl],
                 ],
             ],
-            [
+        ];
+
+        // Show Subscribe or Unsubscribe depending on whether the user has a subscription
+        if ($user->subscriptions()->exists()) {
+            $rows[] = [
+                [
+                    'text' => '🔕 Unsubscribe',
+                ],
+            ];
+        } else {
+            $rows[] = [
                 [
                     'text' => '🔔 Subscribe',
                     'request_location' => true,
                 ],
-            ],
-        ];
+            ];
+        }
 
         if ($user->isAdmin()) {
             $adminUrl = preg_replace('#/app$#', '/admin', $webAppUrl);

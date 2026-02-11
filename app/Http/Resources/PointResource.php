@@ -10,6 +10,8 @@ class PointResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $currentUser = auth()->user();
+
         return [
             'id' => $this->id,
             'latitude' => (float) $this->latitude,
@@ -21,6 +23,12 @@ class PointResource extends JsonResource
             'user' => [
                 'first_name' => $this->user->first_name,
             ],
+            'likes' => $this->votes->where('type.value', 'like')->count(),
+            'dislikes' => $this->votes->where('type.value', 'dislike')->count(),
+            'user_vote' => $currentUser
+                ? $this->votes->where('user_id', $currentUser->id)->first()?->type->value
+                : null,
+            'type' => $this->type ?? 'static_danger',
         ];
     }
 }

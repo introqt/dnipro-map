@@ -11,13 +11,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminTelegramId = config('services.telegram.admin_id');
+        $adminEnv = config('services.telegram.admin_id');
 
-        if ($adminTelegramId) {
-            User::factory()->admin()->create([
-                'telegram_id' => (int) $adminTelegramId,
-                'first_name' => 'Admin',
-            ]);
+        if ($adminEnv) {
+            $adminIds = array_filter(array_map('trim', explode(',', $adminEnv)));
+            foreach ($adminIds as $adminId) {
+                User::factory()->admin()->create([
+                    'telegram_id' => (int) $adminId,
+                    'first_name' => 'Admin',
+                ]);
+            }
         }
 
         $admin = User::where('role', UserRole::Admin)->first()

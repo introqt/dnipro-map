@@ -55,3 +55,57 @@ test('store rejects unauthenticated request', function () {
 
     $response->assertUnauthorized();
 });
+
+test('destroy removes subscription', function () {
+    $user = User::factory()->create();
+    $user->subscriptions()->create([
+        'latitude' => 48.4647,
+        'longitude' => 35.0461,
+        'radius_km' => 5,
+    ]);
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->deleteJson('/api/subscriptions');
+
+    $response->assertOk()
+        ->assertJsonPath('success', true);
+
+    $this->assertDatabaseMissing('subscriptions', ['user_id' => $user->id]);
+});
+
+test('show returns subscription for authenticated user', function () {
+    $user = User::factory()->create();
+    $user->subscriptions()->create([
+        'latitude' => 48.4647,
+        'longitude' => 35.0461,
+        'radius_km' => 5,
+    ]);
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->getJson('/api/subscriptions');
+
+    $response->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.radius_km', 5);
+});
+
+
+test('store defaults radius to 2 when omitted', function () {
+    $user = User::factory()->create();
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->postJson('/api/subscriptions', [
+            'latitude' => 48.4647,
+            'longitude' => 35.0461,
+            // radius_km omitted to assert defaulting
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.radius_km', 2);
+
+    $this->assertDatabaseHas('subscriptions', [
+        'user_id' => $user->id,
+        'radius_km' => 2,
+    ]);
+});

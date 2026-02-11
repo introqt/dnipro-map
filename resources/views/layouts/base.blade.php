@@ -46,8 +46,13 @@
             flex-wrap: wrap;
         }
 
+        .popup-content {
+            min-width: 200px;
+            max-width: 260px;
+        }
+
         .popup-content img {
-            max-width: 200px;
+            max-width: 100%;
             border-radius: 6px;
             margin-top: 6px;
         }
@@ -56,6 +61,43 @@
             font-size: 12px;
             color: #888;
             margin-top: 4px;
+        }
+
+        .popup-content .vote-bar {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .popup-content .vote-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: 16px;
+            padding: 4px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--tg-theme-text-color, #333);
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .popup-content .vote-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .popup-content .vote-btn.active-like {
+            background: #e8f5e9;
+            border-color: #43a047;
+            color: #2e7d32;
+        }
+
+        .popup-content .vote-btn.active-dislike {
+            background: #ffebee;
+            border-color: #e53935;
+            color: #c62828;
         }
 
         @yield('styles')

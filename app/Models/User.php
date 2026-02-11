@@ -36,6 +36,11 @@ class User extends Authenticatable
         return $this->hasMany(Subscription::class);
     }
 
+    public function votes(): HasMany
+    {
+        return $this->hasMany(Vote::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
