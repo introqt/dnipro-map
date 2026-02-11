@@ -3,6 +3,12 @@ set -e
 
 echo "=== Docker Entrypoint Started ===" >&2
 
+# Fix Apache MPM conflict at runtime
+echo "Fixing Apache MPM modules..." >&2
+a2dismod mpm_event mpm_worker 2>/dev/null || true
+find /etc/apache2/mods-enabled/ -name 'mpm_*.load' -o -name 'mpm_*.conf' | grep -v mpm_prefork | xargs rm -f 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
+
 # Use Railway's PORT env var (defaults to 80)
 echo "Checking PORT: ${PORT:-80}" >&2
 if [ -n "$PORT" ]; then
