@@ -82,13 +82,14 @@ class TelegramService
 
     private function resolveUser(array $from): User
     {
-        $adminTelegramId = (int) config('services.telegram.admin_id');
+        $adminEnv = config('services.telegram.admin_id');
+        $adminIds = array_filter(array_map('trim', explode(',', $adminEnv ?? '')));
 
         return User::updateOrCreate(
             ['telegram_id' => $from['id']],
             [
                 'first_name' => $from['first_name'] ?? 'Unknown',
-                'role' => $from['id'] === $adminTelegramId ? UserRole::Admin : UserRole::User,
+                'role' => in_array((string) $from['id'], $adminIds, true) ? UserRole::Admin : UserRole::User,
             ]
         );
     }

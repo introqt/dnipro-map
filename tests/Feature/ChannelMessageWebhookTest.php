@@ -13,7 +13,7 @@ test('store rejects unauthorized requests', function () {
 });
 
 test('store saves message with secret', function () {
-    putenv('CHANNEL_WEBHOOK_SECRET=sekret');
+    config(['app.channel_webhook_secret' => 'sekret']);
 
     $payload = [
         'channel_id' => 'chan1',
