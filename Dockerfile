@@ -20,10 +20,12 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_sqlite zip bcmath opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Fix Apache MPM conflict - remove all MPM modules and enable only mpm_prefork
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
-    && rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
-    && a2enmod mpm_prefork rewrite
+# Fix Apache MPM conflict - force clean MPM setup
+RUN set -eux; \
+    a2dismod mpm_event mpm_worker || true; \
+    find /etc/apache2/mods-enabled/ -name 'mpm_*' -delete; \
+    a2enmod mpm_prefork; \
+    a2enmod rewrite
 
 # Set Apache DocumentRoot to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
