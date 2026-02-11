@@ -10,7 +10,7 @@ test('login page is accessible', function () {
 
 test('correct password sets session and redirects', function () {
     config(['app.admin_password' => 'secret123']);
-    config(['services.telegram.admin_id' => '99999']);
+    config(['services.telegram.admin_id' => '99999,88888']);
 
     $response = $this->post('/admin/login', ['password' => 'secret123']);
 

@@ -19,6 +19,7 @@ class PointController extends Controller
     {
         $points = Point::with(['user', 'votes'])
             ->where('status', PointStatus::Active)
+            ->where('created_at', '>=', now()->subHours(3))
             ->latest()
             ->get();
 

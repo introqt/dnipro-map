@@ -21,7 +21,8 @@ class AdminAuthController extends Controller
             return back()->withErrors(['password' => 'Invalid password.']);
         }
 
-        session(['admin_telegram_id' => config('services.telegram.admin_id')]);
+        $adminIds = array_filter(array_map('trim', explode(',', config('services.telegram.admin_id') ?? '')));
+        session(['admin_telegram_id' => $adminIds[0] ?? null]);
 
         return redirect('/admin');
     }
