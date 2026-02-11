@@ -39,23 +39,27 @@ fi
 # Generate app key if not set
 if [ -z "$APP_KEY" ]; then
     echo "Generating application key..."
-    php artisan key:generate --force
+    php artisan key:generate --force || echo "Warning: Failed to generate app key"
 fi
 
-# Run migrations
+# Run migrations with error handling
 echo "Running database migrations..."
-php artisan migrate --force
+if php artisan migrate --force; then
+    echo "Migrations completed successfully"
+else
+    echo "Warning: Migrations had issues, but continuing startup"
+fi
 
-# Cache for production
+# Cache for production (non-blocking)
 echo "Caching configuration..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan config:cache || echo "Warning: Config cache failed"
+php artisan route:cache || echo "Warning: Route cache failed"
+php artisan view:cache || echo "Warning: View cache failed"
 
-# Create storage link
+# Create storage link (non-blocking)
 php artisan storage:link --force 2>/dev/null || true
 
-# Auto-setup Telegram webhook if enabled
+# Auto-setup Telegram webhook if enabled (non-blocking)
 if [ "$AUTO_SET_WEBHOOK" = "true" ] && [ -n "$APP_URL" ] && [ -n "$TELEGRAM_BOT_TOKEN" ]; then
     echo "Setting up Telegram webhook..."
     php artisan telegram:set-webhook || echo "Warning: Failed to set webhook. You can set it manually later."
