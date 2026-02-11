@@ -5,8 +5,9 @@ namespace App\Listeners;
 use App\Events\PointCreated;
 use App\Models\Subscription;
 use App\Services\TelegramService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class NotifyNearbySubscribers
+class NotifyNearbySubscribers implements ShouldQueue
 {
     private const EARTH_RADIUS_KM = 6371;
 
