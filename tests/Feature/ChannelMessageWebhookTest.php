@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\ChannelMessage;
-
 test('store rejects unauthorized requests', function () {
     $response = $this->postJson('/api/channel-messages', [
         'channel_id' => 'chan1',
@@ -21,7 +19,7 @@ test('store saves message with secret', function () {
         'raw_message' => '48.4647,35.0461 Danger near bridge',
         'parsed_lat' => 48.4647,
         'parsed_lon' => 35.0461,
-        'keywords' => ['danger','bridge'],
+        'keywords' => ['danger', 'bridge'],
     ];
 
     $response = $this->withHeaders(['X-Channel-Webhook-Secret' => 'sekret'])->postJson('/api/channel-messages', $payload);

@@ -89,7 +89,6 @@ test('show returns subscription for authenticated user', function () {
         ->assertJsonPath('data.radius_km', 5);
 });
 
-
 test('store defaults radius to 2 when omitted', function () {
     $user = User::factory()->create();
 

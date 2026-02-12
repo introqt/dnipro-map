@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\ChannelMessageController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\PointController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\VoteController;
-use App\Http\Controllers\Api\CommentController;
-use App\Http\Controllers\Api\ChannelMessageController;
 use App\Http\Middleware\AuthenticateTelegram;
 use Illuminate\Support\Facades\Route;
 

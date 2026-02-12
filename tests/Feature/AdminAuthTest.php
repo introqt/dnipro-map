@@ -46,7 +46,7 @@ test('admin is accessible with valid session', function () {
 test('admin is accessible via telegram for admin user', function () {
     $admin = User::factory()->admin()->create();
 
-    $response = $this->get('/admin?telegram_id=' . $admin->telegram_id);
+    $response = $this->get('/admin?telegram_id='.$admin->telegram_id);
 
     $response->assertOk();
 });

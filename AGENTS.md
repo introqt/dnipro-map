@@ -8,6 +8,8 @@ Dnipro Map is a Telegram Mini App for reporting/viewing danger points on a map o
 
 **Stack:** Laravel 12 / PHP ^8.4 / SQLite / Pest 3 / Vite 7 / Tailwind CSS 4 / vanilla JS in Blade templates.
 
+**Related Docs:** See `CLAUDE.md` for Claude IDE integration guidance and `copilot-instructions.md` for Copilot-specific instructions.
+
 ## Build / Dev / Test / Lint Commands
 
 ```bash
@@ -54,6 +56,7 @@ Always run `./vendor/bin/pint` before committing. Always run `composer test` aft
 - **Negation spacing:** `! $condition` (space after `!`), per Pint convention.
 - **Imports:** One `use` per line, sorted alphabetically. Always use fully-qualified imports (never inline `\App\...` in code).
 - **No `env()` in application code.** Use `config('key')` instead. `env()` breaks after `config:cache`. Env vars should only be read in `config/*.php` files.
+- **Error handling:** Never use silent `catch` blocks. Always log, rethrow, or return meaningful error responses. Validate input before processing.
 
 ### Naming Conventions
 

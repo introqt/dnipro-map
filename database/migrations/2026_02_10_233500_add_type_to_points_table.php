@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (Schema::hasTable('points')) {
             Schema::table('points', function (Blueprint $table) {
-                if (!Schema::hasColumn('points', 'type')) {
+                if (! Schema::hasColumn('points', 'type')) {
                     $table->string('type')->default('static_danger')->after('photo_url');
                 }
             });

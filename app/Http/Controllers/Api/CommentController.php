@@ -13,7 +13,7 @@ class CommentController extends Controller
 
     public function index(Point $point)
     {
-        $comments = $point->comments()->with('user')->latest()->get()->map(function($c){
+        $comments = $point->comments()->with('user')->latest()->get()->map(function ($c) {
             return [
                 'id' => $c->id,
                 'text' => $c->text,
