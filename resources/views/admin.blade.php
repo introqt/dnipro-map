@@ -401,7 +401,7 @@
         try {
             const res = await fetch(url + '?telegram_id=' + tgId, {
                 method,
-                headers: apiHeaders(),
+                headers: adminApiHeaders(),
                 body: JSON.stringify(payload)
             });
 

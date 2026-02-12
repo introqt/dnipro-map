@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -25,8 +26,25 @@ class AuthenticateTelegram
             ['first_name' => 'User']
         );
 
+        if ($user->role !== UserRole::Admin && $this->isConfiguredAdmin($telegramId)) {
+            $user->update(['role' => UserRole::Admin]);
+        }
+
         auth()->login($user);
 
         return $next($request);
+    }
+
+    private function isConfiguredAdmin(string|int $telegramId): bool
+    {
+        $adminEnv = config('services.telegram.admin_id');
+
+        if (! $adminEnv) {
+            return false;
+        }
+
+        $adminIds = array_filter(array_map('trim', explode(',', $adminEnv)));
+
+        return in_array((string) $telegramId, $adminIds, true);
     }
 }
