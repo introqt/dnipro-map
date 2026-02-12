@@ -80,6 +80,28 @@ test('destroy deletes a point', function () {
     $this->assertDatabaseMissing('points', ['id' => $point->id]);
 });
 
+test('store promotes user to admin when telegram id matches config', function () {
+    $user = User::factory()->create(['role' => 'user']);
+
+    config(['services.telegram.admin_id' => (string) $user->telegram_id]);
+
+    $response = $this->withHeaders(['X-Telegram-Id' => $user->telegram_id])
+        ->postJson('/api/points', [
+            'latitude' => 48.4647,
+            'longitude' => 35.0461,
+            'description' => 'Admin via config',
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.description', 'Admin via config');
+
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id,
+        'role' => 'admin',
+    ]);
+});
+
 test('store validates latitude bounds', function () {
     $admin = User::factory()->admin()->create();
 
