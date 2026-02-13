@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PointResource\Pages;
 use App\Enums\PointStatus;
 use App\Filament\Resources\PointResource;
 use App\Models\Point;
+use App\Services\ActivityLogger;
 use Filament\Actions\BulkAction;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -41,6 +42,8 @@ class ListPoints extends ListRecords
                                     'moderated_at' => now(),
                                     'rejection_reason' => null,
                                 ]);
+
+                                ActivityLogger::log('point_approved', $point, 'Point approved (bulk)');
                             });
                         })
                         ->deselectRecordsAfterCompletion(),
@@ -57,6 +60,8 @@ class ListPoints extends ListRecords
                                     'moderated_by' => Auth::id(),
                                     'moderated_at' => now(),
                                 ]);
+
+                                ActivityLogger::log('point_rejected', $point, 'Point rejected (bulk)');
                             });
                         })
                         ->deselectRecordsAfterCompletion(),

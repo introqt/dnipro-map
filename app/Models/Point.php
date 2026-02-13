@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PointStatus;
 use App\Enums\PointType;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Point extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'user_id',

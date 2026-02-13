@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\VoteController;
 use App\Http\Middleware\AuthenticateTelegram;
+use App\Http\Middleware\EnforceUserStatus;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/points', [PointController::class, 'index']);
@@ -14,7 +15,7 @@ Route::get('/points/{point}/comments', [CommentController::class, 'index']);
 
 Route::post('/channel-messages', [ChannelMessageController::class, 'store']);
 
-Route::middleware(AuthenticateTelegram::class)->group(function () {
+Route::middleware([AuthenticateTelegram::class, EnforceUserStatus::class])->group(function () {
     Route::post('/points', [PointController::class, 'store']);
     Route::put('/points/{point}', [PointController::class, 'update']);
     Route::delete('/points/{point}', [PointController::class, 'destroy']);

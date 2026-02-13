@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PointResource\Pages;
 
 use App\Enums\PointStatus;
 use App\Filament\Resources\PointResource;
+use App\Services\ActivityLogger;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
@@ -29,6 +30,8 @@ class ViewPoint extends ViewRecord
                         'moderated_at' => now(),
                         'rejection_reason' => null,
                     ]);
+
+                    ActivityLogger::log('point_approved', $this->record, 'Point approved');
                 }),
 
             Action::make('reject')
@@ -43,6 +46,8 @@ class ViewPoint extends ViewRecord
                         'moderated_by' => Auth::id(),
                         'moderated_at' => now(),
                     ]);
+
+                    ActivityLogger::log('point_rejected', $this->record, 'Point rejected');
                 }),
 
             EditAction::make(),

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PointResource\Pages;
 
 use App\Enums\PointStatus;
 use App\Filament\Resources\PointResource;
+use App\Services\ActivityLogger;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
@@ -30,6 +31,7 @@ class EditPoint extends EditRecord
                         'rejection_reason' => null,
                     ]);
 
+                    ActivityLogger::log('point_approved', $this->record, 'Point approved');
                     $this->refreshFormData(['status', 'moderated_by', 'moderated_at', 'rejection_reason']);
                 }),
 
@@ -46,6 +48,7 @@ class EditPoint extends EditRecord
                         'moderated_at' => now(),
                     ]);
 
+                    ActivityLogger::log('point_rejected', $this->record, 'Point rejected');
                     $this->refreshFormData(['status', 'moderated_by', 'moderated_at']);
                 }),
 

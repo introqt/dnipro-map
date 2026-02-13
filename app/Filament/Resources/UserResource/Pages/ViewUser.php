@@ -5,6 +5,7 @@ namespace App\Filament\Resources\UserResource\Pages;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Filament\Resources\UserResource;
+use App\Services\ActivityLogger;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
@@ -36,6 +37,10 @@ class ViewUser extends ViewRecord
                         'banned_at' => now(),
                         'ban_reason' => $data['ban_reason'],
                     ]);
+
+                    ActivityLogger::log('user_banned', $this->record, 'User banned', [
+                        'reason' => $data['ban_reason'],
+                    ]);
                 }),
 
             Action::make('mute')
@@ -58,6 +63,10 @@ class ViewUser extends ViewRecord
                         'banned_at' => now(),
                         'ban_reason' => $data['ban_reason'],
                     ]);
+
+                    ActivityLogger::log('user_muted', $this->record, 'User muted', [
+                        'reason' => $data['ban_reason'],
+                    ]);
                 }),
 
             Action::make('unban')
@@ -67,10 +76,16 @@ class ViewUser extends ViewRecord
                 ->requiresConfirmation()
                 ->visible(fn (): bool => $this->record->isBanned() || $this->record->isMuted())
                 ->action(function (): void {
+                    $previousStatus = $this->record->status;
+
                     $this->record->update([
                         'status' => UserStatus::Active,
                         'banned_at' => null,
                         'ban_reason' => null,
+                    ]);
+
+                    ActivityLogger::log('user_unbanned', $this->record, 'User unbanned/unmuted', [
+                        'previous_status' => $previousStatus->value,
                     ]);
                 }),
 
@@ -85,6 +100,8 @@ class ViewUser extends ViewRecord
                     $this->record->update([
                         'role' => UserRole::Admin,
                     ]);
+
+                    ActivityLogger::log('user_promoted', $this->record, 'User promoted to admin');
                 }),
 
             Action::make('demote')
@@ -97,6 +114,8 @@ class ViewUser extends ViewRecord
                     $this->record->update([
                         'role' => UserRole::User,
                     ]);
+
+                    ActivityLogger::log('user_demoted', $this->record, 'User demoted to regular user');
                 }),
         ];
     }
