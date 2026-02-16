@@ -10,6 +10,8 @@ class MapPicker extends MapWidget
 {
     use InteractsWithPageTable;
 
+    protected string $view = 'filament.resources.point-resource.widgets.map-picker';
+
     public ?Point $record = null;
 
     protected ?string $markerResource = PointResource::class;

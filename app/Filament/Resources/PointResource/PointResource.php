@@ -107,13 +107,17 @@ class PointResource extends Resource
                         ->options(collect(PointType::cases())->mapWithKeys(
                             fn (PointType $type): array => [$type->value => $type->label()]
                         ))
-                        ->default(PointType::Other->value)
+                        ->default(PointType::StaticDanger->value)
                         ->required(),
 
                     Select::make('status')
                         ->options(collect(PointStatus::cases())->mapWithKeys(
                             fn (PointStatus $status): array => [$status->value => $status->label()]
                         ))
+                        ->default(fn (): string => Auth::user()?->isAdmin()
+                            ? PointStatus::Active->value
+                            : PointStatus::Pending->value
+                        )
                         ->required(),
                 ])
                 ->columns(2),
