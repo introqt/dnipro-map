@@ -18,7 +18,8 @@ class UpdatePointRequest extends FormRequest
             'latitude' => ['sometimes', 'numeric', 'between:48.35,48.60'],
             'longitude' => ['sometimes', 'numeric', 'between:34.90,35.15'],
             'description' => ['sometimes', 'string', 'max:1000'],
-            'photo_url' => ['nullable', 'url'],
+            'media' => ['nullable', 'array'],
+            'media.*' => ['url'],
             'type' => ['sometimes', 'in:static_danger,moving_person,danger_road'],
         ];
     }

@@ -4,27 +4,45 @@ namespace App\Filament\Resources;
 
 use App\Enums\PointStatus;
 use App\Enums\PointType;
-use App\Filament\Resources\PointResource\Pages;
 use App\Filament\Resources\PointResource\RelationManagers\CommentsRelationManager;
 use App\Filament\Resources\PointResource\RelationManagers\VotesRelationManager;
+use App\Filament\Resources\PointResource\Widgets\MapPicker;
 use App\Models\Point;
+use EduardoRibeiroDev\FilamentLeaflet\Support\Markers\Marker;
+use EduardoRibeiroDev\FilamentLeaflet\Tables\MapColumn;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 
-class PointResource extends Resource
+class PointResource extends AbstractResource
 {
+    private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+    private const VIDEO_EXTENSIONS = ['mp4', 'mov', 'avi', 'webm'];
+
+    private const MAX_MEDIA_FILES = 5;
+
+    private const MAX_MEDIA_SIZE_KB = 51200;
+
+    private const IMAGE_PREVIEW_LIMIT = 3;
+
+    private const IMAGE_PREVIEW_HEIGHT = 100;
+
+    private const NO_VIDEO_LABEL = 'none';
+
     protected static ?string $model = Point::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
@@ -50,28 +68,28 @@ class PointResource extends Resource
         return $schema->components([
             Section::make('Location')
                 ->schema([
-                    TextInput::make('latitude')
+                    MapPicker::make('location')
+                        ->height(300)
                         ->required()
-                        ->numeric()
-                        ->minValue(-90)
-                        ->maxValue(90)
-                        ->step(0.0000001),
+                        ->columnSpanFull()
+                        ->pickMarker(fn (Marker $marker): Marker => $marker->blue()->title('Point Location'))
+                        ->afterStateUpdated(function (array $state, callable $set): void {
+                            $set('latitude', $state['latitude'] ?? null);
+                            $set('longitude', $state['longitude'] ?? null);
+                        })
+                        ->zoom(15),
 
-                    TextInput::make('longitude')
-                        ->required()
-                        ->numeric()
-                        ->minValue(-180)
-                        ->maxValue(180)
-                        ->step(0.0000001),
-                ])
-                ->columns(2),
+                    Hidden::make('latitude')
+                        ->required(),
 
-            Section::make('Details')
-                ->schema([
+                    Hidden::make('longitude')
+                        ->required(),
+
                     Textarea::make('description')
                         ->required()
                         ->maxLength(1000)
-                        ->rows(3),
+                        ->rows(3)
+                        ->columnSpanFull(),
 
                     Select::make('type')
                         ->options(collect(PointType::cases())->mapWithKeys(
@@ -84,13 +102,24 @@ class PointResource extends Resource
                             fn (PointStatus $status): array => [$status->value => $status->label()]
                         ))
                         ->required(),
-
-                    TextInput::make('photo_url')
-                        ->label('Photo URL')
-                        ->url()
-                        ->maxLength(255),
                 ])
                 ->columns(2),
+
+            Section::make('Content')
+                ->schema([
+                    FileUpload::make('media')
+                        ->label('Photos & Videos')
+                        ->image()
+                        ->imageEditor()
+                        ->multiple()
+                        ->maxFiles(self::MAX_MEDIA_FILES)
+                        ->disk('public')
+                        ->directory('points')
+                        ->visibility('public')
+                        ->acceptedFileTypes(['image/*', 'video/*'])
+                        ->maxSize(self::MAX_MEDIA_SIZE_KB)
+                        ->columnSpanFull(),
+                ]),
 
             Section::make('Moderation')
                 ->schema([
@@ -106,17 +135,36 @@ class PointResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable(),
-
-                TextColumn::make('user.first_name')
+                TextColumn::make('user.telegram_id')
                     ->label('Author')
                     ->searchable(),
 
                 TextColumn::make('description')
-                    ->limit(40)
+                    ->limit(255)
                     ->searchable(),
+
+                ImageColumn::make('media')
+                    ->label('Images')
+                    ->state(fn (Point $record): array => self::filterMediaByExtensions(
+                        $record->media ?? [],
+                        self::IMAGE_EXTENSIONS
+                    ))
+                    ->stacked()
+                    ->limit(self::IMAGE_PREVIEW_LIMIT)
+                    ->imageHeight(self::IMAGE_PREVIEW_HEIGHT)
+                    ->limitedRemainingText(),
+
+                TextColumn::make('media')
+                    ->label('Videos')
+                    ->getStateUsing(fn (Point $record): int => count(
+                        self::filterMediaByExtensions($record->media ?? [], self::VIDEO_EXTENSIONS)
+                    ))
+                    ->formatStateUsing(fn (int $state): string => $state === 0
+                        ? self::NO_VIDEO_LABEL
+                        : 'View (' . $state . ')'
+                    )
+                    ->url(fn (Point $record): ?string => self::firstVideoUrl($record->media ?? []))
+                    ->openUrlInNewTab(),
 
                 TextColumn::make('type')
                     ->badge()
@@ -127,6 +175,12 @@ class PointResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn ($state): string => $state instanceof PointStatus ? $state->label() : (string) $state)
                     ->color(fn ($state): string => $state instanceof PointStatus ? $state->color() : 'gray'),
+
+                MapColumn::make('location')
+                    ->height(100)
+                    ->zoom(14)
+                    ->pickMarker(fn(Marker $marker): Marker => $marker->icon(size: [14, 25]))
+                    ->static(),
 
                 TextColumn::make('latitude')
                     ->numeric(7)
@@ -167,7 +221,6 @@ class PointResource extends Resource
                     )),
             ])
             ->recordActions([
-                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -186,13 +239,46 @@ class PointResource extends Resource
         ];
     }
 
-    public static function getPages(): array
+    /** @param array<int, string> $media */
+    private static function filterMediaByExtensions(array $media, array $extensions): array
+    {
+        return array_values(array_filter($media, function (string $path) use ($extensions): bool {
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+            return in_array($extension, $extensions, true);
+        }));
+    }
+
+    /** @param array<int, string> $media */
+    private static function firstVideoUrl(array $media): ?string
+    {
+        $videos = self::filterMediaByExtensions($media, self::VIDEO_EXTENSIONS);
+
+        if ($videos === []) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($videos[0]);
+    }
+
+    /** @param array<int, string> $videos */
+    private static function formatVideoCount(array $videos): string
+    {
+        $count = count($videos);
+
+        if ($count === 0) {
+            return self::NO_VIDEO_LABEL;
+        }
+
+        return (string) $count;
+    }
+
+    protected function getHeaderWidgets(): array
     {
         return [
-            'index' => Pages\ListPoints::route('/'),
-            'create' => Pages\CreatePoint::route('/create'),
-            'view' => Pages\ViewPoint::route('/{record}'),
-            'edit' => Pages\EditPoint::route('/{record}/edit'),
+            MapPicker::make('location')
+                ->height(300)
+                ->columnSpanFull()
         ];
     }
 }

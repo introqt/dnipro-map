@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PointStatus;
 use App\Enums\PointType;
 use App\Models\Concerns\LogsActivity;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +22,7 @@ class Point extends Model
         'latitude',
         'longitude',
         'description',
-        'photo_url',
+        'media',
         'status',
         'type',
         'moderated_by',
@@ -32,12 +33,28 @@ class Point extends Model
     protected function casts(): array
     {
         return [
-            'latitude' => 'decimal:7',
-            'longitude' => 'decimal:7',
+            'latitude' => 'string:7',
+            'longitude' => 'string:7',
+            'media' => 'array',
             'status' => PointStatus::class,
             'type' => PointType::class,
             'moderated_at' => 'datetime',
         ];
+    }
+
+    public function location(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): string => "({$this->latitude}, {$this->longitude})",
+            set: function(string $value): void {
+                $coordinates = explode(',', trim($value, '()'));
+
+                if (count($coordinates) === 2) {
+                    $this->attributes['latitude'] = $coordinates[0];
+                    $this->attributes['longitude'] = $coordinates[1];
+                }
+            }
+        );
     }
 
     public function user(): BelongsTo

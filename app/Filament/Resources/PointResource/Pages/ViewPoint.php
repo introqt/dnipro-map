@@ -14,6 +14,13 @@ class ViewPoint extends ViewRecord
 {
     protected static string $resource = PointResource::class;
 
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+        
+        $this->redirect(static::getResource()::getUrl('edit', ['record' => $record]), navigate: true);
+    }
+
     protected function getHeaderActions(): array
     {
         return [

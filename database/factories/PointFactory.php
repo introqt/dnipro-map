@@ -14,12 +14,22 @@ class PointFactory extends Factory
 {
     public function definition(): array
     {
+        $mediaCount = fake()->numberBetween(0, 3);
+        $media = [];
+        
+        for ($i = 0; $i < $mediaCount; $i++) {
+            $media[] = fake()->randomElement([
+                fake()->imageUrl(640, 480, 'danger', true),
+                'videos/' . fake()->uuid() . '.mp4',
+            ]);
+        }
+
         return [
             'user_id' => User::factory(),
             'latitude' => fake()->latitude(48.35, 48.60),
             'longitude' => fake()->longitude(34.90, 35.15),
             'description' => fake()->sentence(),
-            'photo_url' => fake()->boolean(30) ? fake()->imageUrl() : null,
+            'media' => $media,
             'status' => PointStatus::Active,
             'type' => fake()->randomElement(PointType::cases()),
         ];
