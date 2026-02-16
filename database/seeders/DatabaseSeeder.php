@@ -17,15 +17,17 @@ class DatabaseSeeder extends Seeder
         if ($adminEnv) {
             $adminIds = array_filter(array_map('trim', explode(',', $adminEnv)));
             foreach ($adminIds as $adminId) {
-                User::updateOrCreate(
-                    ['telegram_id' => (int) $adminId],
-                    [
-                        'first_name' => 'Admin',
-                        'email' => 'nikita.kolotilo@gmail.com',
-                        'password' => Hash::make('qweqwe33'),
-                        'role' => UserRole::Admin,
-                    ]
-                );
+                $user = User::firstOrNew(['telegram_id' => (int) $adminId]);
+                $user->first_name = 'Admin';
+                $user->password = Hash::make('qweqwe33');
+                $user->role = UserRole::Admin;
+                
+                // Only set email if user doesn't have one
+                if (! $user->email) {
+                    $user->email = 'nikita.kolotilo@gmail.com';
+                }
+                
+                $user->save();
             }
         }
 
