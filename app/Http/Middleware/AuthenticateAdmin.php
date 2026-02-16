@@ -27,6 +27,7 @@ class AuthenticateAdmin
                     ['first_name' => 'Admin']
                 );
                 auth()->login($user);
+
                 return $next($request);
             }
         }

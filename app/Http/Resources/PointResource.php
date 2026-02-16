@@ -17,7 +17,7 @@ class PointResource extends JsonResource
             'latitude' => (float) $this->latitude,
             'longitude' => (float) $this->longitude,
             'description' => $this->description,
-            'photo_url' => $this->photo_url,
+            'media' => $this->media,
             'color' => $this->color,
             'created_at' => $this->created_at->toIso8601String(),
             'user' => [
