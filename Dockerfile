@@ -6,6 +6,12 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY vite.config.js ./
 COPY resources/ resources/
+
+# Create stub directories for Tailwind @source paths
+# (Tailwind scans these paths but they can be empty during build)
+RUN mkdir -p vendor/laravel/framework/src/Illuminate/Pagination/resources/views \
+    && mkdir -p storage/framework/views
+
 RUN npm run build
 
 # ── Stage 2: PHP + Apache ──
