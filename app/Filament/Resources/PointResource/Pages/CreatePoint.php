@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\PointResource\Pages;
 
-use App\Filament\Resources\PointResource;
+use App\Filament\Resources\PointResource\PointResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreatePoint extends CreateRecord

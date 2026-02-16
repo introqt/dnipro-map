@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\PointResource\Pages;
 
 use App\Enums\PointStatus;
-use App\Filament\Resources\PointResource;
+use App\Filament\Resources\PointResource\PointResource;
+use App\Filament\Resources\PointResource\Actions\PendingAction;
+use App\Filament\Resources\PointResource\Actions\RelevantAction;
 use App\Models\Point;
 use App\Services\ActivityLogger;
 use Filament\Actions\BulkAction;
@@ -21,6 +23,8 @@ class ListPoints extends ListRecords
     {
         return [
             CreateAction::make(),
+            PendingAction::make(),
+            RelevantAction::make(),
         ];
     }
 

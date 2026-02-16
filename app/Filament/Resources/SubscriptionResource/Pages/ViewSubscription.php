@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\SubscriptionResource\Pages;
 
-use App\Filament\Resources\SubscriptionResource;
+use App\Filament\Resources\SubscriptionResource\SubscriptionResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\ViewRecord;
 

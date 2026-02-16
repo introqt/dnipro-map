@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\PointResource\Pages;
 
 use App\Enums\PointStatus;
-use App\Filament\Resources\PointResource;
+use App\Filament\Resources\PointResource\PointResource;
 use App\Services\ActivityLogger;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;

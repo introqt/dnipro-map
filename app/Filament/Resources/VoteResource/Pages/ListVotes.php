@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\VoteResource\Pages;
 
-use App\Filament\Resources\VoteResource;
+use App\Filament\Resources\VoteResource\VoteResource;
 use Filament\Resources\Pages\ListRecords;
 
 class ListVotes extends ListRecords

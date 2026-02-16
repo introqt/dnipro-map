@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Enums\PointStatus;
 use App\Enums\UserStatus;
+use App\Filament\Resources\PointResource\PointResource;
 use App\Models\Comment;
 use App\Models\Point;
 use App\Models\User;
@@ -27,12 +28,14 @@ class StatsOverview extends StatsOverviewWidget
             Stat::make('Total Points', $totalPoints)
                 ->description("{$activePoints} active, {$pendingPoints} pending")
                 ->descriptionIcon('heroicon-m-map-pin')
-                ->color('primary'),
+                ->color('primary')
+                ->url(PointResource::getUrl('index') . '?tableFilters[status]=' . PointStatus::Pending->value),
 
             Stat::make('Pending Moderation', $pendingPoints)
                 ->description('Points awaiting review')
                 ->descriptionIcon('heroicon-m-clock')
-                ->color($pendingPoints > 0 ? 'warning' : 'success'),
+                ->color($pendingPoints > 0 ? 'warning' : 'success')
+                ->url(PointResource::getUrl('index') . '?tableFilters[status]=' . PointStatus::Pending->value . '&filters[status][value]=' . PointStatus::Pending->value),
 
             Stat::make('Total Users', $totalUsers)
                 ->description("{$bannedUsers} banned")

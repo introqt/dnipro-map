@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\PointStatus;
+use App\Filament\Resources\PointResource\PointResource;
 use App\Models\Point;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -14,7 +15,17 @@ class LatestPendingPoints extends TableWidget
 
     protected static ?int $sort = 2;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'half';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('view_all')
+                ->label('View All')
+                ->url(PointResource::getUrl('index') . '?tableFilters[status]=' . PointStatus::Pending->value)
+                ->icon('heroicon-m-arrow-right'),
+        ];
+    }
 
     public function table(Table $table): Table
     {

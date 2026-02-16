@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\PointResource;
 
 use App\Enums\PointStatus;
 use App\Enums\PointType;
+use App\Filament\Resources\PointResource\Pages\EditPoint;
+use App\Filament\Resources\PointResource\Pages\ListPoints;
 use App\Filament\Resources\PointResource\RelationManagers\CommentsRelationManager;
 use App\Filament\Resources\PointResource\RelationManagers\VotesRelationManager;
 use App\Filament\Resources\PointResource\Widgets\MapPicker;
@@ -23,11 +25,14 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
 
-class PointResource extends AbstractResource
+class PointResource extends Resource
 {
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
@@ -213,12 +218,17 @@ class PointResource extends AbstractResource
                 SelectFilter::make('status')
                     ->options(collect(PointStatus::cases())->mapWithKeys(
                         fn (PointStatus $status): array => [$status->value => $status->label()]
-                    )),
+                    ))
+                    ->default(PointStatus::Pending->value),
 
                 SelectFilter::make('type')
                     ->options(collect(PointType::cases())->mapWithKeys(
                         fn (PointType $type): array => [$type->value => $type->label()]
                     )),
+
+                Filter::make('relevant')
+                    ->label('Relevant (last 3h)')
+                    ->query(fn (Builder $query): Builder => $query->where('created_at', '>=', now()->subHours(3))),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -261,24 +271,20 @@ class PointResource extends AbstractResource
         return Storage::disk('public')->url($videos[0]);
     }
 
-    /** @param array<int, string> $videos */
-    private static function formatVideoCount(array $videos): string
-    {
-        $count = count($videos);
-
-        if ($count === 0) {
-            return self::NO_VIDEO_LABEL;
-        }
-
-        return (string) $count;
-    }
-
     protected function getHeaderWidgets(): array
     {
         return [
             MapPicker::make('location')
                 ->height(300)
                 ->columnSpanFull()
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListPoints::route('/'),
+            'edit' => EditPoint::route('/{record}/edit'),
         ];
     }
 }

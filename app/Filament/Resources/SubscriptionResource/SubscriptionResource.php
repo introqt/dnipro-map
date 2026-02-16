@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\SubscriptionResource;
 
 use App\Filament\Resources\SubscriptionResource\Pages;
 use App\Models\Subscription;

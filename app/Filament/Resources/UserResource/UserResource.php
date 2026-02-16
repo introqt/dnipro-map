@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\UserResource;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
@@ -8,7 +8,6 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
@@ -126,9 +125,6 @@ class UserResource extends Resource
                     ->options(collect(UserStatus::cases())->mapWithKeys(
                         fn (UserStatus $status): array => [$status->value => $status->label()]
                     )),
-            ])
-            ->recordActions([
-                ViewAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

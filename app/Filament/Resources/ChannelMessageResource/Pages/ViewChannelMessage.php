@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\ChannelMessageResource\Pages;
 
-use App\Filament\Resources\ChannelMessageResource;
+use App\Filament\Resources\ChannelMessageResource\ChannelMessageResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\ViewRecord;
 

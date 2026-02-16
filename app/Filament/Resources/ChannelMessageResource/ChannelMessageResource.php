@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\ChannelMessageResource;
 
 use App\Filament\Resources\ChannelMessageResource\Pages;
 use App\Models\ChannelMessage;

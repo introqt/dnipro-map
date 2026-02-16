@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\VoteResource;
 
 use App\Enums\VoteType;
 use App\Filament\Resources\VoteResource\Pages;

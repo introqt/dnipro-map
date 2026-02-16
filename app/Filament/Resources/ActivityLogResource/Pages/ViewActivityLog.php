@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\ActivityLogResource\Pages;
 
-use App\Filament\Resources\ActivityLogResource;
+use App\Filament\Resources\ActivityLogResource\ActivityLogResource;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewActivityLog extends ViewRecord

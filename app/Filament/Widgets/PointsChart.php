@@ -10,9 +10,9 @@ class PointsChart extends ChartWidget
 {
     protected ?string $heading = 'Points Created (Last 30 Days)';
 
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 3;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'half';
 
     protected function getType(): string
     {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\ActivityLogResource;
 
 use App\Filament\Resources\ActivityLogResource\Pages;
 use App\Models\ActivityLog;

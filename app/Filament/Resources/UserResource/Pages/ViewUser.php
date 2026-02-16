@@ -4,7 +4,7 @@ namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
-use App\Filament\Resources\UserResource;
+use App\Filament\Resources\UserResource\UserResource;
 use App\Services\ActivityLogger;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
