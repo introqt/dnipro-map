@@ -13,10 +13,10 @@ Dnipro Map is a Telegram Mini App for reporting/viewing danger points on a map o
 ## Build / Dev / Test / Lint Commands
 
 ```bash
-# Full setup (deps, key, migrate, build)
+# Full setup (deps, key, migrate, build assets)
 composer setup
 
-# Dev server (Laravel + queue + Pail logs + Vite, concurrently)
+# Dev server (Laravel + queue + Vite concurrently)
 composer dev
 
 # Run ALL tests
@@ -25,7 +25,7 @@ composer test
 # Run a single test FILE
 php artisan test --filter=PointControllerTest
 
-# Run a single test by NAME
+# Run a single test by NAME (must match exactly)
 php artisan test --filter="store creates a point for admin"
 
 # Lint / auto-fix code style (Laravel Pint, default preset)
@@ -33,9 +33,12 @@ php artisan test --filter="store creates a point for admin"
 
 # Check lint without fixing
 ./vendor/bin/pint --test
+
+# Set Telegram webhook
+php artisan telegram:set-webhook {url?}
 ```
 
-Always run `./vendor/bin/pint` before committing. Always run `composer test` after making changes to verify nothing is broken.
+Always run `./vendor/bin/pint` before committing. Always run `composer test` after making changes.
 
 ## Code Style & Formatting
 
@@ -135,6 +138,14 @@ No traditional auth. Users identified by Telegram ID:
 ### Events & Listeners
 
 - `PointCreated` -> `NotifyNearbySubscribers` (queued, haversine distance calculation)
+
+### Channel Listener (External)
+
+A separate Node.js userbot (`channel-listener.cjs`) connects to Telegram as a real user, listens for messages from `agendaDnepr` channel, parses coordinates/keywords, and POSTs to `/api/channel-messages`.
+
+### Point Color Calculation
+
+Server-side computed based on age: red (<1h), yellow (1-2h), green (2-3h), gray (>3h).
 
 ## Environment Variables
 
