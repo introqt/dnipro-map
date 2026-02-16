@@ -21,12 +21,6 @@ class DatabaseSeeder extends Seeder
                 $user->first_name = 'Admin';
                 $user->password = Hash::make('qweqwe33');
                 $user->role = UserRole::Admin;
-                
-                // Only set email if user doesn't have one
-                if (! $user->email) {
-                    $user->email = 'nikita.kolotilo@gmail.com';
-                }
-                
                 $user->save();
             }
         }
