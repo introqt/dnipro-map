@@ -23,8 +23,8 @@ class ListPoints extends ListRecords
     {
         return [
             CreateAction::make(),
-            PendingAction::make(),
-            RelevantAction::make(),
+            // PendingAction::make(),
+            // RelevantAction::make(),
         ];
     }
 

@@ -14,6 +14,6 @@ class PendingAction
         return Action::make('pending')
             ->label('Pending')
             ->color(Color::Orange)
-            ->url(fn (Request $request): string => $request->url().'?tableFilters[status]='.PointStatus::Pending->value);
+            ->url(fn (Request $request): string => $request->url().'?tableFilters[status][value]='.PointStatus::Pending->value);
     }
 }

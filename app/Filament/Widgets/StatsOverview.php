@@ -29,13 +29,13 @@ class StatsOverview extends StatsOverviewWidget
                 ->description("{$activePoints} active, {$pendingPoints} pending")
                 ->descriptionIcon('heroicon-m-map-pin')
                 ->color('primary')
-                ->url(PointResource::getUrl('index') . '?tableFilters[status]=' . PointStatus::Pending->value),
+                ->url(PointResource::getUrl('index').'?tableFilters[status][value]='.PointStatus::Pending->value),
 
             Stat::make('Pending Moderation', $pendingPoints)
                 ->description('Points awaiting review')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color($pendingPoints > 0 ? 'warning' : 'success')
-                ->url(PointResource::getUrl('index') . '?tableFilters[status]=' . PointStatus::Pending->value . '&filters[status][value]=' . PointStatus::Pending->value),
+                ->url(PointResource::getUrl('index').'?tableFilters[status][value]='.PointStatus::Pending->value),
 
             Stat::make('Total Users', $totalUsers)
                 ->description("{$bannedUsers} banned")

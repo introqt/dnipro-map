@@ -22,7 +22,7 @@ class LatestPendingPoints extends TableWidget
         return [
             \Filament\Actions\Action::make('view_all')
                 ->label('View All')
-                ->url(PointResource::getUrl('index') . '?tableFilters[status]=' . PointStatus::Pending->value)
+                ->url(PointResource::getUrl('index').'?tableFilters[status][value]='.PointStatus::Pending->value)
                 ->icon('heroicon-m-arrow-right'),
         ];
     }

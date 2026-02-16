@@ -13,6 +13,6 @@ class RelevantAction
         return Action::make('relevant')
             ->label('Relevant')
             ->color(Color::Green)
-            ->url(fn (Request $request): string => $request->url() . '?tableFilters[relevant]=1');
+            ->url(fn (Request $request): string => $request->url().'?tableFilters[relevant]=true');
     }
 }
