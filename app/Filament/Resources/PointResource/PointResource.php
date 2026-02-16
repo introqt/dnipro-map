@@ -10,6 +10,7 @@ use App\Filament\Resources\PointResource\RelationManagers\CommentsRelationManage
 use App\Filament\Resources\PointResource\RelationManagers\VotesRelationManager;
 use App\Filament\Resources\PointResource\Widgets\MapPicker;
 use App\Models\Point;
+use Auth;
 use EduardoRibeiroDev\FilamentLeaflet\Support\Markers\Marker;
 use EduardoRibeiroDev\FilamentLeaflet\Tables\MapColumn;
 use Filament\Actions\BulkActionGroup;
@@ -46,7 +47,7 @@ class PointResource extends Resource
 
     private const IMAGE_PREVIEW_HEIGHT = 100;
 
-    private const NO_VIDEO_LABEL = 'none';
+    private const NO_VIDEO_LABEL = 'x';
 
     protected static ?string $model = Point::class;
 
@@ -75,14 +76,20 @@ class PointResource extends Resource
                 ->schema([
                     MapPicker::make('location')
                         ->height(300)
+                        ->default(null)
                         ->required()
                         ->columnSpanFull()
-                        ->pickMarker(fn (Marker $marker): Marker => $marker->blue()->title('Point Location'))
+                        ->pickMarker(fn (Marker $marker): Marker => $marker->icon(size: [14, 22]))
                         ->afterStateUpdated(function (array $state, callable $set): void {
                             $set('latitude', $state['latitude'] ?? null);
                             $set('longitude', $state['longitude'] ?? null);
                         })
-                        ->zoom(15),
+                        ->zoom(12),
+
+                    Hidden::make('user_id')
+                        ->label('Author User ID')
+                        ->default(fn () => Auth::id())
+                        ->required(),
 
                     Hidden::make('latitude')
                         ->required(),
@@ -100,6 +107,7 @@ class PointResource extends Resource
                         ->options(collect(PointType::cases())->mapWithKeys(
                             fn (PointType $type): array => [$type->value => $type->label()]
                         ))
+                        ->default(PointType::Other->value)
                         ->required(),
 
                     Select::make('status')
@@ -113,16 +121,17 @@ class PointResource extends Resource
             Section::make('Content')
                 ->schema([
                     FileUpload::make('media')
+                        ->maxSize(self::MAX_MEDIA_SIZE_KB)
                         ->label('Photos & Videos')
-                        ->image()
-                        ->imageEditor()
                         ->multiple()
                         ->maxFiles(self::MAX_MEDIA_FILES)
                         ->disk('public')
                         ->directory('points')
                         ->visibility('public')
                         ->acceptedFileTypes(['image/*', 'video/*'])
-                        ->maxSize(self::MAX_MEDIA_SIZE_KB)
+                        ->panelLayout('grid')
+                        ->openable(true)
+                        ->fetchFileInformation(false)
                         ->columnSpanFull(),
                 ]),
 
@@ -269,15 +278,6 @@ class PointResource extends Resource
         }
 
         return Storage::disk('public')->url($videos[0]);
-    }
-
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            MapPicker::make('location')
-                ->height(300)
-                ->columnSpanFull()
-        ];
     }
 
     public static function getPages(): array

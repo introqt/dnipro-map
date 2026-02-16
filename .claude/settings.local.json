@@ -8,7 +8,10 @@
       "Bash(php -r \"require ''vendor/autoload.php''; $app = require ''bootstrap/app.php''; $app->make\\(''Illuminate\\\\Contracts\\\\Console\\\\Kernel''\\)->bootstrap\\(\\); echo $app->version\\(\\);\")",
       "Bash(php artisan:*)",
       "Bash(php -r:*)",
-      "Bash(./vendor/bin/pint:*)"
+      "Bash(./vendor/bin/pint:*)",
+      "Bash(powershell.exe -Command \"cd C:\\\\Users\\\\mykyta.kolotylo\\\\code\\\\pet\\\\dnipro-map; php -r \"\"echo json_encode\\(json_decode\\(file_get_contents\\(''composer.lock''\\)\\)->packages[array_search\\(''opcodesio/log-viewer'', array_column\\(json_decode\\(file_get_contents\\(''composer.lock''\\)\\)->packages, ''name''\\)\\)]->version\\);\"\"\")",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(\"/c/Users/mykyta.kolotylo/.config/herd/bin/php.bat\" artisan test)"
     ]
   }
 }

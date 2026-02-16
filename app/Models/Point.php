@@ -77,11 +77,6 @@ class Point extends Model
         return $this->hasMany(Comment::class);
     }
 
-    public function media(): MorphMany
-    {
-        return $this->morphMany(Media::class, 'mediable');
-    }
-
     public function isPending(): bool
     {
         return $this->status === PointStatus::Pending;

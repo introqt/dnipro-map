@@ -12,6 +12,7 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "opcodesio/log-viewer": "^3.21",
         "pbmedia/laravel-ffmpeg": "^8.7",
         "spatie/image-optimizer": "^1.8"
     },

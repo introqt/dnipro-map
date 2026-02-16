@@ -13,13 +13,13 @@ class UploadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'file' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:51200'], // 50MB
         ]);
 
         $path = $request->file('file')->store('uploads', 'public');
 
         return $this->successResponse(
-            ['url' => asset('storage/'.$path)],
+            ['url' => asset('storage/' . $path)],
             'File uploaded.',
             201
         );
