@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Point;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,10 +17,15 @@ class DatabaseSeeder extends Seeder
         if ($adminEnv) {
             $adminIds = array_filter(array_map('trim', explode(',', $adminEnv)));
             foreach ($adminIds as $adminId) {
-                User::factory()->admin()->create([
-                    'telegram_id' => (int) $adminId,
-                    'first_name' => 'Admin',
-                ]);
+                User::updateOrCreate(
+                    ['telegram_id' => (int) $adminId],
+                    [
+                        'first_name' => 'Admin',
+                        'email' => 'nikita.kolotilo@gmail.com',
+                        'password' => Hash::make('qweqwe33'),
+                        'role' => UserRole::Admin,
+                    ]
+                );
             }
         }
 
