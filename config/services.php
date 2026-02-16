@@ -42,4 +42,11 @@ return [
         'admin_id' => env('ADMIN_TELEGRAM_ID'),
     ],
 
+    'media_optimizer' => [
+        'ffmpeg_binaries' => env('FFMPEG_BINARIES', 'ffmpeg'),
+        'ffprobe_binaries' => env('FFPROBE_BINARIES', 'ffprobe'),
+        'ffmpeg_timeout' => env('FFMPEG_TIMEOUT', 3600),
+        'ffmpeg_threads' => env('FFMPEG_THREADS', 12),
+    ],
+
 ];
