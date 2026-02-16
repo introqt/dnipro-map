@@ -21,6 +21,12 @@ class DatabaseSeeder extends Seeder
                 $user->first_name = 'Admin';
                 $user->password = Hash::make('qweqwe33');
                 $user->role = UserRole::Admin;
+                
+                // Set email for Filament login if not already set
+                if (! $user->email) {
+                    $user->email = "admin{$adminId}@dnipro-map.local";
+                }
+                
                 $user->save();
             }
         }
