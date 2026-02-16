@@ -3,28 +3,24 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Enums\UserRole;
-use Filament\Forms\Components\Component;
+use Filament\Auth\Pages\Register as BaseRegister;
 use Filament\Forms\Components\TextInput;
-use Filament\Pages\Auth\Register as BaseRegister;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 
 class Register extends BaseRegister
 {
-    protected function getForms(): array
+    public function form(Schema $schema): Schema
     {
-        return [
-            'form' => $this->form(
-                $this->makeForm()
-                    ->schema([
-                        $this->getTelegramIdFormComponent(),
-                        $this->getNameFormComponent(),
-                        $this->getEmailFormComponent(),
-                        $this->getPasswordFormComponent(),
-                        $this->getPasswordConfirmationFormComponent(),
-                    ])
-                    ->statePath('data'),
-            ),
-        ];
+        return $schema
+            ->components([
+                $this->getTelegramIdFormComponent(),
+                $this->getNameFormComponent(),
+                $this->getEmailFormComponent(),
+                $this->getPasswordFormComponent(),
+                $this->getPasswordConfirmationFormComponent(),
+            ]);
     }
 
     protected function getTelegramIdFormComponent(): Component
