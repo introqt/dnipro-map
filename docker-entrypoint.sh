@@ -43,6 +43,10 @@ echo "Setting up Laravel storage directories..." >&2
 mkdir -p storage/framework/{sessions,views,cache} 2>&1 || true
 mkdir -p storage/logs 2>&1 || true
 mkdir -p storage/app/public 2>&1 || true
+mkdir -p storage/app/private 2>&1 || true
+mkdir -p storage/app/livewire-tmp 2>&1 || true
+chown -R www-data:www-data storage 2>&1 || true
+chmod -R 775 storage 2>&1 || true
 
 # Link persistent storage for photos
 if [ ! -L "storage/app/public/photos" ]; then
