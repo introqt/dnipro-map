@@ -11,9 +11,8 @@ class CreatePoint extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (empty($data['user_id'])) {
-            $data['user_id'] = 1;
-        }
+        // Set the current authenticated user as the point creator
+        $data['user_id'] = auth()->id();
 
         return $data;
     }
