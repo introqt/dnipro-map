@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
 
         if ($adminEnv) {
             $adminIds = array_filter(array_map('trim', explode(',', $adminEnv)));
-            foreach ($adminIds as $adminId) {
+            foreach ($adminIds as $index => $adminId) {
                 $user = User::firstOrNew(['telegram_id' => (int) $adminId]);
                 $user->first_name = 'Admin';
                 $user->password = Hash::make('qweqwe33');
@@ -24,7 +24,10 @@ class DatabaseSeeder extends Seeder
                 
                 // Set email for Filament login if not already set
                 if (! $user->email) {
-                    $user->email = 'nikita.kolotilo@gmail.com';
+                    // Use different email for each admin to avoid unique constraint
+                    $user->email = $index === 0 
+                        ? 'nikita.kolotilo@gmail.com' 
+                        : "admin{$adminId}@dnipro-map.app";
                 }
                 
                 $user->save();
