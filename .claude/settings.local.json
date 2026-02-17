@@ -14,7 +14,8 @@
       "Bash(\"/c/Users/mykyta.kolotylo/.config/herd/bin/php.bat\" artisan test)",
       "WebFetch(domain:filamentphp.com)",
       "Bash(powershell -Command \"cd C:\\\\Users\\\\mykyta.kolotylo\\\\code\\\\pet\\\\dnipro-map; php artisan test\":*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(git push:*)"
     ]
   }
 }
