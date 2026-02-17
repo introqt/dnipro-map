@@ -21,6 +21,7 @@ fi
 export LOG_CHANNEL="${LOG_CHANNEL:-stderr}"
 export QUEUE_CONNECTION="${QUEUE_CONNECTION:-sync}"
 echo "Environment: LOG_CHANNEL=$LOG_CHANNEL, QUEUE_CONNECTION=$QUEUE_CONNECTION" >&2
+echo "Database: DB_CONNECTION=$DB_CONNECTION, DB_HOST=$DB_HOST, DB_PORT=$DB_PORT, DB_DATABASE=$DB_DATABASE, DB_USERNAME=$DB_USERNAME, DB_URL=${DB_URL:+set}" >&2
 
 # Create persistent storage directory structure
 echo "Creating storage directories..." >&2
@@ -59,15 +60,15 @@ else
     echo "APP_KEY already set, skipping generation" >&2
 fi
 
-# Run migrations with timeout protection
-echo "Running database migrations..." >&2
-timeout 60 php artisan migrate --force 2>&1 || echo "Warning: Migrations had issues, but continuing startup" >&2
-
-# Cache for production (non-blocking, with timeout)
+# Cache for production (must run before migrations so DB config is fresh)
 echo "Caching configuration..." >&2
 timeout 30 php artisan config:cache 2>&1 || echo "Warning: Config cache failed" >&2
 timeout 30 php artisan route:cache 2>&1 || echo "Warning: Route cache failed" >&2
 timeout 30 php artisan view:cache 2>&1 || echo "Warning: View cache failed" >&2
+
+# Run migrations with timeout protection
+echo "Running database migrations..." >&2
+timeout 60 php artisan migrate --force 2>&1 || echo "Warning: Migrations had issues, but continuing startup" >&2
 
 # Create storage link (non-blocking)
 echo "Creating storage link..." >&2
