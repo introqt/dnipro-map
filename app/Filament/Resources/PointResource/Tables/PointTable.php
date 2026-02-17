@@ -13,8 +13,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
@@ -110,21 +110,18 @@ class PointTable
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                SelectFilter::make('status')
-                    ->options(collect(PointStatus::cases())->mapWithKeys(
-                        fn (PointStatus $status): array => [$status->value => $status->label()]
-                    ))
-                    ->default(PointStatus::Pending->value),
-
-                SelectFilter::make('type')
-                    ->options(collect(PointType::cases())->mapWithKeys(
-                        fn (PointType $type): array => [$type->value => $type->label()]
-                    )),
+                Filter::make('pending')
+                    ->label('Pending')
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->where('status', PointStatus::Pending)),
 
                 Filter::make('relevant')
-                    ->label('Relevant (last 3h)')
+                    ->label('Relevant')
+                    ->toggle()
+                    ->default()
                     ->query(fn (Builder $query): Builder => $query->where('created_at', '>=', now()->subHours(3))),
-            ])
+            ], layout: FiltersLayout::AboveContent)
+            ->deferFilters(false)
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
