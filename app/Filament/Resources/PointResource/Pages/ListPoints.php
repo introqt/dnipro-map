@@ -2,18 +2,14 @@
 
 namespace App\Filament\Resources\PointResource\Pages;
 
-use App\Enums\PointStatus;
+use App\Filament\Resources\PointResource\Actions\ApproveBulkAction;
+use App\Filament\Resources\PointResource\Actions\RejectBulkAction;
 use App\Filament\Resources\PointResource\PointResource;
-use App\Filament\Resources\PointResource\Actions\PendingAction;
-use App\Filament\Resources\PointResource\Actions\RelevantAction;
-use App\Models\Point;
-use App\Services\ActivityLogger;
-use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
 
 class ListPoints extends ListRecords
 {
@@ -23,8 +19,6 @@ class ListPoints extends ListRecords
     {
         return [
             CreateAction::make(),
-            // PendingAction::make(),
-            // RelevantAction::make(),
         ];
     }
 
@@ -32,45 +26,10 @@ class ListPoints extends ListRecords
     {
         return parent::table($table)
             ->toolbarActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    BulkAction::make('approve')
-                        ->label('Approve Selected')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->action(function (Collection $records): void {
-                            $records->each(function (Point $point): void {
-                                $point->update([
-                                    'status' => PointStatus::Active,
-                                    'moderated_by' => Auth::id(),
-                                    'moderated_at' => now(),
-                                    'rejection_reason' => null,
-                                ]);
-
-                                ActivityLogger::log('point_approved', $point, 'Point approved (bulk)');
-                            });
-                        })
-                        ->deselectRecordsAfterCompletion(),
-
-                    BulkAction::make('reject')
-                        ->label('Reject Selected')
-                        ->icon('heroicon-o-x-circle')
-                        ->color('danger')
-                        ->requiresConfirmation()
-                        ->action(function (Collection $records): void {
-                            $records->each(function (Point $point): void {
-                                $point->update([
-                                    'status' => PointStatus::Rejected,
-                                    'moderated_by' => Auth::id(),
-                                    'moderated_at' => now(),
-                                ]);
-
-                                ActivityLogger::log('point_rejected', $point, 'Point rejected (bulk)');
-                            });
-                        })
-                        ->deselectRecordsAfterCompletion(),
-
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    ApproveBulkAction::make(),
+                    RejectBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

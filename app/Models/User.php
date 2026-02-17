@@ -78,7 +78,10 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::Admin;
+        return $this->isActive() && in_array(
+            $this->telegram_id, haystack: 
+            explode(',', env('ADMIN_TELEGRAM_ID'))
+        );
     }
 
     public function isBanned(): bool
