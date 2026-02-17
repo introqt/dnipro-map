@@ -45,6 +45,7 @@ class PointTable
 
                 ImageColumn::make('media')
                     ->label('Images')
+                    ->disk('public')
                     ->state(fn (Point $record): array => self::filterMediaByExtensions(
                         $record->media ?? [],
                         self::IMAGE_EXTENSIONS

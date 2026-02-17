@@ -19,12 +19,12 @@ FROM php:8.4-apache
 
 # Install system deps + PHP extensions
 RUN apt-get update && apt-get install -y \
-        libsqlite3-dev \
+        default-libmysqlclient-dev \
         libzip-dev \
         libicu-dev \
         unzip \
         git \
-    && docker-php-ext-install pdo_sqlite zip bcmath opcache intl \
+    && docker-php-ext-install pdo_mysql zip bcmath opcache intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Fix Apache MPM conflict - force clean MPM setup

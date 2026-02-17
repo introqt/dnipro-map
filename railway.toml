@@ -6,6 +6,6 @@ healthcheckPath = "/up"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
-# Persistent volume for SQLite database and uploaded files
+# Persistent volume for uploaded files (photos)
 [[deploy.volumes]]
 mountPath = "/data"

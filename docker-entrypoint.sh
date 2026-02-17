@@ -20,23 +20,13 @@ fi
 # Set default environment variables for Railway
 export LOG_CHANNEL="${LOG_CHANNEL:-stderr}"
 export QUEUE_CONNECTION="${QUEUE_CONNECTION:-sync}"
-export DB_DATABASE="${DB_DATABASE:-/data/database.sqlite}"
-
-echo "Environment: LOG_CHANNEL=$LOG_CHANNEL, QUEUE_CONNECTION=$QUEUE_CONNECTION, DB_DATABASE=$DB_DATABASE" >&2
+echo "Environment: LOG_CHANNEL=$LOG_CHANNEL, QUEUE_CONNECTION=$QUEUE_CONNECTION" >&2
 
 # Create persistent storage directory structure
 echo "Creating storage directories..." >&2
 mkdir -p /data/storage/photos 2>&1 || echo "Failed to create /data/storage/photos" >&2
 chown -R www-data:www-data /data 2>&1 || echo "Failed to chown /data" >&2
 chmod -R 775 /data 2>&1 || echo "Failed to chmod /data" >&2
-
-# Create SQLite database on persistent volume if it doesn't exist
-if [ ! -f "$DB_DATABASE" ]; then
-    echo "Creating SQLite database at $DB_DATABASE..." >&2
-    mkdir -p "$(dirname "$DB_DATABASE")"
-    touch "$DB_DATABASE"
-    chown www-data:www-data "$DB_DATABASE"
-fi
 
 # Ensure storage directories exist
 echo "Setting up Laravel storage directories..." >&2

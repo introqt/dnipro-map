@@ -24,9 +24,13 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://your-app.railway.app
 
-# База данных (SQLite на persistent volume)
-DB_CONNECTION=sqlite
-DB_DATABASE=/data/database.sqlite
+# База данных (MySQL на Railway)
+DB_CONNECTION=mysql
+DB_HOST=${{MySQL.MYSQL_HOST}}
+DB_PORT=${{MySQL.MYSQL_PORT}}
+DB_DATABASE=${{MySQL.MYSQL_DATABASE}}
+DB_USERNAME=${{MySQL.MYSQL_USER}}
+DB_PASSWORD=${{MySQL.MYSQL_PASSWORD}}
 
 # Логирование для Railway
 LOG_CHANNEL=stderr
@@ -61,17 +65,22 @@ SESSION_DRIVER=database
 CACHE_STORE=database
 ```
 
-### 3. Настройте Volume для постоянного хранения данных
+### 3. Добавьте MySQL на Railway
+
+1. В проекте нажмите **New** → **Database** → **Add MySQL**
+2. Railway автоматически создаст MySQL инстанс и переменные окружения
+3. Используйте reference variables в настройках вашего сервиса (см. выше)
+
+### 4. Настройте Volume для загруженных файлов
 
 Railway автоматически создаст volume для `/data` (настроено в `railway.toml`).
 
 Этот volume хранит:
-- **SQLite база данных**: `/data/database.sqlite`
 - **Загруженные фото**: `/data/storage/photos/`
 
-⚠️ **Важно**: Без volume все данные потеряются при редеплое!
+⚠️ **Важно**: Без volume загруженные фото потеряются при редеплое!
 
-### 4. Получите URL приложения
+### 5. Получите URL приложения
 
 После деплоя Railway присвоит URL вида: `https://your-app.up.railway.app`
 
@@ -81,7 +90,7 @@ APP_URL=https://your-app.up.railway.app
 WEB_APP_URL=https://your-app.up.railway.app/app
 ```
 
-### 5. Настройте Telegram Webhook
+### 6. Настройте Telegram Webhook
 
 #### Автоматически (если установлен `AUTO_SET_WEBHOOK=true`):
 Webhook настроится автоматически при деплое.
@@ -99,7 +108,7 @@ php artisan telegram:set-webhook
 railway run php artisan telegram:set-webhook
 ```
 
-### 6. Проверьте деплой
+### 7. Проверьте деплой
 
 - **Health check**: `https://your-app.railway.app/up` → должен вернуть `200 OK`
 - **Админ-панель**: `https://your-app.railway.app/admin`
@@ -143,7 +152,7 @@ railway run php artisan telegram:set-webhook
 
 ### Структура базы данных
 
-Приложение использует SQLite с автоматическими миграциями:
+Приложение использует MySQL с автоматическими миграциями:
 
 - `users` - пользователи Telegram
 - `points` - опасные точки на карте
@@ -219,13 +228,13 @@ railway run php artisan tinker
 railway run php artisan telegram:set-webhook
 ```
 
-#### ❌ "Database file not found"
+#### ❌ "Database connection refused"
 
 **Решение**:
 Убедитесь что:
-1. Volume настроен в Railway Dashboard
-2. `DB_DATABASE=/data/database.sqlite` в переменных окружения
-3. Редеплойте приложение после настройки volume
+1. MySQL сервис добавлен в Railway проект
+2. Reference variables (`${{MySQL.MYSQL_HOST}}` и т.д.) настроены правильно
+3. Редеплойте приложение после настройки MySQL
 
 #### ❌ "Photos disappear after redeploy"
 
@@ -306,39 +315,13 @@ railway variables set KEY=value
 
 ## 📊 Масштабирование
 
-### Переход на PostgreSQL
-
-Если SQLite становится узким местом:
-
-1. Добавьте PostgreSQL в Railway:
-   - **New** → **Database** → **Add PostgreSQL**
-
-2. Railway автоматически добавит переменные `DATABASE_URL`
-
-3. Обновите Dockerfile - добавьте в секцию установки PHP extensions:
-   ```dockerfile
-   && docker-php-ext-install pdo_pgsql
-   ```
-
-4. Измените переменные:
-   ```env
-   DB_CONNECTION=pgsql
-   DB_HOST=${{Postgres.PGHOST}}
-   DB_PORT=${{Postgres.PGPORT}}
-   DB_DATABASE=${{Postgres.PGDATABASE}}
-   DB_USERNAME=${{Postgres.PGUSER}}
-   DB_PASSWORD=${{Postgres.PGPASSWORD}}
-   ```
-
-5. Редеплойте
-
 ### Horizontal Scaling
 
 Railway поддерживает репликацию сервисов:
 - Dashboard → Service → **Settings** → **Replicas**
 - Установите количество реплик (требует платный план)
 
-⚠️ **Внимание**: С несколькими репликами нужна shared БД (PostgreSQL) вместо SQLite.
+MySQL уже используется как shared БД, поэтому горизонтальное масштабирование работает из коробки.
 
 ---
 
