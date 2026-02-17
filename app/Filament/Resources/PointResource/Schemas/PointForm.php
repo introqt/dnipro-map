@@ -87,7 +87,6 @@ class PointForm
                         ->acceptedFileTypes(['image/*', 'video/*'])
                         ->panelLayout('grid')
                         ->openable(true)
-                        ->fetchFileInformation(false)
                         ->columnSpanFull(),
                 ]),
 
