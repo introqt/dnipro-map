@@ -1,0 +1,107 @@
+📱 КАК ПОЛУЧИТЬ API_ID И API_HASH ДЛЯ TELEGRAM
+============================================
+
+⚠️  ВАЖНО: Текущие credentials в .env больше не работают!
+   Вам нужно получить НОВЫЕ значения.
+
+
+🔧 ШАГ 1: Получить новые credentials (5 минут)
+═════════════════════════════════════════════════
+
+1. 🌐 Откройте в браузере:
+   https://my.telegram.org/apps
+
+2. 📱 Log in с номером вашего Telegram аккаунта
+   (тот же номер, который установлен как PHONE в .env)
+
+3. 🛠️  Нажмите кнопку "API Development Tools"
+
+4. 🗑️  Если уже есть приложение "parser":
+   - Нажмите "Edit"
+   - Скролл вниз → "Delete this Application"
+   - Подтвердите удаление
+
+5. ➕ Создайте НОВОЕ приложение:
+   - App title:           Parser (или любое имя)
+   - Short name:          parser (обязательно латиница)
+   - Нажмите "Create Application"
+
+6. 📋 Скопируйте НОВЫЕ значения:
+   - APP ID          = API_ID (цифры)
+   - APP HASH        = API_HASH (буквы и цифры)
+
+
+🔐 ШАГ 2: Обновить .env файл
+═══════════════════════════════
+
+Откройте файл: /Users/dollymolly/Downloads/parser-user/app/.env
+
+Найдите эти строки (около строки 10):
+   API_ID=30758318
+   API_HASH=f6eb61b6c1542f30da9c97ce1d999909
+
+Замените на НОВЫЕ значения:
+   API_ID=<СКОПИРОВАННЫЙ_ID>
+   API_HASH=<СКОПИРОВАННЫЙ_HASH>
+
+📌 Примеры:
+   API_ID=123456789
+   API_HASH=abcdef1234567890abcdef1234567890
+
+
+🧹 ШАГ 3: Очистить старую сессию
+════════════════════════════════
+
+В терминале выполните:
+   cd /Users/dollymolly/Downloads/parser-user/app
+   rm -f userbot_parser.session userbot_parser.session-journal
+
+
+🚀 ШАГ 4: Запустить скрипт
+═════════════════════════════
+
+   source /Users/dollymolly/Downloads/parser-user/.venv-1/bin/activate
+   cd /Users/dollymolly/Downloads/parser-user/app
+   python parser_telethon.py
+
+Скрипт попросит:
+   1. Ваш номер телефона (уже есть в .env)
+   2. Код подтверждения (придет в Telegram)
+
+Введите код → готово! ✅
+
+
+⚡ БЫСТРЫЕ КОМАНДЫ
+════════════════════
+
+# Все в одну строку:
+source ~/.venv-1/bin/activate && \
+cd ~/Downloads/parser-user/app && \
+python parser_telethon.py
+
+
+❓ ЕСЛИ ЕЩЕ НЕ РАБОТАЕТ
+═════════════════════════
+
+✓ Убедитесь что:
+  - API_ID содержит ТОЛЬКО ЦИФРЫ
+  - API_HASH содержит буквы и цифры (32 символа)
+  - PHONE начинается с + и содержит код страны (+380...)
+  - Файл .env сохранен (Ctrl+S в редакторе)
+
+✓ Попробуйте:
+  - Повторно удалить сессию: rm -f userbot_parser.session*
+  - Перезагрузить компьютер
+  - Использовать другой номер телефона (если у вас их несколько)
+
+✓ Проверьте что на my.telegram.org:
+  - Приложение еще있다 (не было удалено)
+  - Вы вошли именно в тот аккаунт, с которого создали приложение
+
+
+🔗 ССЫЛКИ
+════════════════════════════
+
+- API Credentials: https://my.telegram.org/apps
+- Документация Telethon: https://docs.telethon.dev/
+- Telegram API docs: https://core.telegram.org/
