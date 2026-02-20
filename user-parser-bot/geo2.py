@@ -78,10 +78,10 @@ except Exception:
 class ParsedAddress:
     """Structured address extracted by any method."""
     street_type: str = ""       # "вулиця", "проспект", etc. (nominative)
-    street_name: str = ""       # "Хрещатик", "Тверская" (nominative)
+    street_name: str = ""       # "Хрещатик" (nominative)
     building: str = ""          # "22", "7А"
     apartment: str = ""         # "5", "12"
-    city: str = ""              # "Київ", "Москва" (nominative)
+    city: str = ""              # "Київ" (nominative)
     postal_code: str = ""       # "01001"
     raw_text: str = ""          # original extracted fragment
     confidence: float = 0.0     # 0.0 – 1.0
@@ -168,57 +168,105 @@ def detect_language(text: str) -> str:
 # ── Shared prompt ─────────────────────────────────────────────────
 
 _SYSTEM_PROMPT = """\
-You are an expert address extraction system for Russian and Ukrainian texts.
+You are an expert address extraction system for Russian and Ukrainian texts, \
+specializing in informal, colloquial, and fragmented messages (e.g. Telegram reports, \
+witness descriptions, patrol logs).
 
-TASK: Extract the physical address from the user's message.
+TASK: Extract the physical address from the user's message and return it in nominative case.
 
-CRITICAL RULES:
-1. Convert ALL words to NOMINATIVE case (називний відмінок / именительный падеж):
-   - "на Хрещатику" → street_name: "Хрещатик"
-   - "по Тверской"  → street_name: "Тверская"
-   - "Шевченка"     → street_name: "Шевченко" (if it's a person's name used as street)
-   - "на Арбате"    → street_name: "Арбат"
-   - "Большую Садовую" → street_name: "Большая Садовая"
-   - "на Невском"   → street_name: "Невский"
-   - "Грушевського"  → street_name: "Грушевський"
-   - "Тараса Шевченка" → street_name: "Тарас Шевченко"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 1 — NOMINATIVE CASE (називний / именительный)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Convert ALL inflected street/city names to nominative singular:
+  "на Хрещатику"       → street_name: "Хрещатик"
+  "Шевченка"           → street_name: "Шевченко"
+  "Грушевського"       → street_name: "Грушевський"
+  "Тараса Шевченка"    → street_name: "Тарас Шевченко"
+  "Яворницького"       → street_name: "Яворницький"
+  "Слобожанського"     → street_name: "Слобожанський"
+  "Дзержинського"      → street_name: "Дзержинський"
+  "Великої Садової"    → street_name: "Велика Садова"
+  "Набережній Перемоги"→ street_name: "Набережна Перемоги"
 
-2. Detect the street type even if abbreviated or absent:
-   - "вул." / "вулиця" / "вулиці" → street_type: "вулиця"
-   - "ул." / "улица" / "улице"    → street_type: "улица"
-   - "просп." / "проспект"        → street_type: "проспект"
-   - "пров." / "провулок"         → street_type: "провулок"
-   - "пер." / "переулок"          → street_type: "переулок"
-   - "пл." / "площа" / "площадь"  → street_type: "площа" (uk) or "площадь" (ru)
-   - "бульв." / "бульвар"         → street_type: "бульвар"
-   - "наб." / "набережна/ая"      → street_type: "набережна" (uk) or "набережная" (ru)
-   - "узвіз"                      → street_type: "узвіз"
-   - "шосе" / "шоссе"             → keep as is
-   - If no type given, infer "вулиця" (uk) or "улица" (ru) as default.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 2 — STREET TYPE DETECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Detect type even if abbreviated, inflected, or missing entirely.
 
-1. Detect the city from context (it may always be Dnipro if not mentioned).:
-   - "у Дніпрі" / "в Дніпрі" → city: "Дніпро"
+  вул. / вулиця / вулиці / вул          → "вулиця"   (uk)
+  ул. / улица / улице / ул              → "улица"    (ru)
+  просп. / пр. / пр-т / проспект       → "проспект"
+  пров. / провулок                      → "провулок" (uk)
+  пер. / переулок                       → "переулок" (ru)
+  пл. / площа / площадь                → "площа" (uk) / "площадь" (ru)
+  бульв. / бульвар                      → "бульвар"
+  наб. / набережна / набережная         → "набережна" (uk) / "набережная" (ru)
+  узвіз                                 → "узвіз"
+  шосе / шоссе                          → "шосе" / "шоссе"
+  тупик                                 → "тупик"
+  провулок / проїзд                     → "провулок" / "проїзд"
 
-4. Extract building number, apartment, postal code if present.
+  If NO type is given or detectable — default to "вулиця" (uk) or "улица" (ru).
+  If the text is ambiguous between uk/ru, prefer Ukrainian ("вулиця").
 
-5. If NO address is found, return all fields as empty strings.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 3 — CITY DETECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Extract city from context. All inflected forms → nominative:
+  "у Дніпрі" / "в Дніпрі" / "Дніпро"  → "Дніпро"
+  "у Києві" / "в Києві"                → "Київ"
+  "у Львові"                           → "Львів"
+  "в Харькове" / "у Харкові"           → "Харків"
+  "в Одессе" / "в Одесі"              → "Одеса"
+  "в Запорожье" / "у Запоріжжі"       → "Запоріжжя"
 
-Respond with ONLY a JSON object, no markdown, no backticks, no explanation:
+  DEFAULT RULE: If the city is NOT mentioned anywhere in the message, set city: "Дніпро".
+  Only override this default if another city is explicitly named or clearly implied.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 4 — BUILDING, APARTMENT, POSTAL CODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Building:     "буд. 5", "д. 12", "№7", "7А", bare numbers after street name
+  Apartment:    "кв. 3", "кв.3", "квартира 5", "apt 2"
+  Postal code:  5-digit Ukrainian (01001)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 5 — CONFIDENCE SCORING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  0.9–1.0  Full address: street + building + city clearly stated
+  0.7–0.89 Street + building found, city inferred or defaulted
+  0.5–0.69 Street name found, no building, city inferred
+  0.3–0.49 Likely address but ambiguous (landmark, intersection, district only)
+  0.0–0.29 No address found — return all fields as empty strings ""
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 6 — SPECIAL CASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - Intersections: "перехрестя Титова і Поля" → use the more specific street as street_name,
+    add the second to raw_text
+  - Landmarks: "біля АТБ на Слобожанському" → extract "Слобожанський" as street_name
+  - District-only mentions ("район Лівобережний") → low confidence (0.3), no street
+  - Ignore car descriptions, times, names of people — focus only on location
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Respond with ONLY a raw JSON object. No markdown, no backticks, no explanation.
+
 {
-  "street_type": "...",
-  "street_name": "...",
-  "building": "...",
-  "apartment": "...",
-  "city": "...",
-  "postal_code": "...",
-  "raw_text": "...",
-  "confidence": 0.0
+  "street_type": "вулиця",
+  "street_name": "Хрещатик",
+  "building": "22",
+  "apartment": "",
+  "city": "Київ",
+  "postal_code": "",
+  "raw_text": "вул. Хрещатик, 22",
+  "confidence": 0.95
 }
 
-"raw_text" = the substring of the original message that contains the address.
-"confidence" = 0.0 to 1.0, how confident you are that an address was found.
+"raw_text"   = exact substring from the original message that contains the address
+"confidence" = float 0.0–1.0 per the scoring table above
 """
-
 
 def _parse_llm_response(text: str) -> Optional[ParsedAddress]:
     """Safely parse LLM JSON response into ParsedAddress."""
@@ -247,7 +295,7 @@ def _parse_llm_response(text: str) -> Optional[ParsedAddress]:
         return None
 
     confidence = float(data.get("confidence", 0.0))
-    if confidence < 0.3:
+    if confidence < 0.1:
         return None
 
     return ParsedAddress(
@@ -487,26 +535,7 @@ for _form in _STREET_TYPES_ALL_RU:
 # ── Cities ────────────────────────────────────────────────────────
 
 _CITIES_UK = {
-    "Київ": ("Київ","Києві","Києва","Києвом"),
-    "Львів": ("Львів","Львові","Львова","Львовом"),
-    "Одеса": ("Одеса","Одесі","Одеси","Одесу","Одесою"),
-    "Харків": ("Харків","Харкові","Харкова","Харковом"),
     "Дніпро": ("Дніпро","Дніпрі","Дніпра","Дніпром"),
-    "Запоріжжя": ("Запоріжжя","Запоріжжі"),
-    "Вінниця": ("Вінниця","Вінниці","Вінницю","Вінницею"),
-    "Полтава": ("Полтава","Полтаві","Полтави","Полтаву"),
-    "Чернігів": ("Чернігів","Чернігові","Чернігова"),
-    "Черкаси": ("Черкаси","Черкасах","Черкас"),
-    "Суми": ("Суми","Сумах","Сум"),
-    "Рівне": ("Рівне","Рівному"),
-    "Тернопіль": ("Тернопіль","Тернополі","Тернополя"),
-    "Луцьк": ("Луцьк","Луцьку","Луцька"),
-    "Ужгород": ("Ужгород","Ужгороді","Ужгорода"),
-    "Миколаїв": ("Миколаїв","Миколаєві","Миколаєва"),
-    "Хмельницький": ("Хмельницький","Хмельницькому","Хмельницького"),
-    "Івано-Франківськ": ("Івано-Франківськ","Івано-Франківську"),
-    "Кропивницький": ("Кропивницький","Кропивницькому"),
-    "Житомир": ("Житомир","Житомирі","Житомира"),
 }
 
 
@@ -884,7 +913,22 @@ def extract_and_geocode(
     parsed: Optional[ParsedAddress] = None
     method = "none"
 
-    # ── Step 1: Try AI backends ───────────────────────────────────
+        # ── Step 1: Offline fallback ──────────────────────────────────
+    if not parsed:
+        parsed = _extract_offline(text, lang)
+        if parsed:
+            method = "offline"
+            if not parsed.city:
+                parsed.city = city_hint or _find_city(text) or ""
+
+    if not parsed:
+        return GeoResult(
+            original_text=text, language=lang,
+            method="none", error="No address found",
+        )
+
+
+    # ── Step 2: Try AI backends ───────────────────────────────────
     for backend in _backends:
         try:
             parsed = backend.extract(text)
@@ -899,19 +943,6 @@ def extract_and_geocode(
             logger.warning("Backend %s failed: %s", backend.name, e)
             continue
 
-    # ── Step 2: Offline fallback ──────────────────────────────────
-    if not parsed:
-        parsed = _extract_offline(text, lang)
-        if parsed:
-            method = "offline"
-            if not parsed.city:
-                parsed.city = city_hint or _find_city(text) or ""
-
-    if not parsed:
-        return GeoResult(
-            original_text=text, language=lang,
-            method="none", error="No address found",
-        )
 
     # ── Step 3: Geocode ───────────────────────────────────────────
     # Build geocoding query from parsed address
